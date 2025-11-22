@@ -21,6 +21,6 @@ export const LazyCalculatorDashboard = lazy(() => import('./CalculatorDashboard'
 export const LazyComprehensiveESGDashboard = lazy(() => import('./ComprehensiveESGDashboard'));
 export const LazyESGReportingDashboard = lazy(() => import('./ESGReportingDashboard'));
 export const LazyStakeholderSentimentDashboard = lazy(() => import('./StakeholderSentimentDashboard'));
-export const LazyIoTDashboard = lazy(() => import('./EnhancedIoTDashboard'));
-export const LazyReportsAnalyticsDashboard = lazy(() => import('./ReportsAnalyticsDashboard'));
-export const LazyEnhancedFrameworkCompliance = lazy(() => import('./EnhancedFrameworkCompliance'));
+export const LazyIoTDashboard = lazy(() => import('./IoTDashboard'));
+export const LazyReportsAnalyticsDashboard = lazy(() => import('./ComprehensiveESGDashboard'));
+export const LazyEnhancedFrameworkCompliance = lazy(() => import('./FrameworkCompliance'));

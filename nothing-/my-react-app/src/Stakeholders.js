@@ -10,6 +10,19 @@ const Stakeholders = () => {
   const theme = getThemeClasses(isDark);
   const [selectedStakeholder, setSelectedStakeholder] = useState(null);
   const [animationClass, setAnimationClass] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newStakeholderData, setNewStakeholderData] = useState({
+    name: '',
+    type: 'External',
+    engagement: 'Medium',
+    icon: '👤',
+    priority: 'Medium',
+    description: '',
+    concerns: '',
+    nextAction: '',
+    satisfaction: 50,
+    email: ''
+  });
   
   const [stakeholders, setStakeholders] = useState([
     { 
@@ -159,22 +172,7 @@ const Stakeholders = () => {
               </div>
             </div>
             <button 
-              onClick={() => {
-                const newStakeholder = {
-                  id: stakeholders.length + 1,
-                  name: `New Stakeholder ${stakeholders.length + 1}`,
-                  type: 'External',
-                  engagement: 'Medium',
-                  lastContact: new Date().toISOString().split('T')[0],
-                  icon: '👤',
-                  priority: 'Medium',
-                  description: 'New stakeholder requiring engagement strategy',
-                  concerns: ['Initial Assessment'],
-                  nextAction: 'Schedule Introduction Meeting',
-                  satisfaction: 50
-                };
-                setStakeholders([...stakeholders, newStakeholder]);
-              }}
+              onClick={() => setShowAddForm(true)}
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                 isDark 
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-purple-500/25'
@@ -412,6 +410,228 @@ const Stakeholders = () => {
           </div>
         </div>
       </main>
+
+      {/* Add Stakeholder Form Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`max-w-2xl w-full rounded-2xl p-6 ${
+            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+          } shadow-2xl max-h-[90vh] overflow-y-auto`}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={`text-2xl font-bold ${theme.text.primary}`}>➕ Add New Stakeholder</h2>
+              <button 
+                onClick={() => setShowAddForm(false)}
+                className={`p-2 rounded-lg transition-all ${
+                  isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const newStakeholder = {
+                id: stakeholders.length + 1,
+                name: newStakeholderData.name,
+                type: newStakeholderData.type,
+                engagement: newStakeholderData.engagement,
+                lastContact: new Date().toISOString().split('T')[0],
+                icon: newStakeholderData.icon,
+                priority: newStakeholderData.priority,
+                description: newStakeholderData.description,
+                concerns: newStakeholderData.concerns.split(',').map(c => c.trim()).filter(c => c),
+                nextAction: newStakeholderData.nextAction,
+                satisfaction: parseInt(newStakeholderData.satisfaction),
+                email: newStakeholderData.email
+              };
+              setStakeholders([...stakeholders, newStakeholder]);
+              setShowAddForm(false);
+              setNewStakeholderData({
+                name: '',
+                type: 'External',
+                engagement: 'Medium',
+                icon: '👤',
+                priority: 'Medium',
+                description: '',
+                concerns: '',
+                nextAction: '',
+                satisfaction: 50,
+                email: ''
+              });
+            }} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newStakeholderData.name}
+                  onChange={(e) => setNewStakeholderData({...newStakeholderData, name: e.target.value})}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="Enter stakeholder name"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Type *</label>
+                  <select
+                    value={newStakeholderData.type}
+                    onChange={(e) => setNewStakeholderData({...newStakeholderData, type: e.target.value})}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="Financial">Financial</option>
+                    <option value="Internal">Internal</option>
+                    <option value="External">External</option>
+                    <option value="Compliance">Compliance</option>
+                    <option value="Social">Social</option>
+                    <option value="Business">Business</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Icon</label>
+                  <input
+                    type="text"
+                    value={newStakeholderData.icon}
+                    onChange={(e) => setNewStakeholderData({...newStakeholderData, icon: e.target.value})}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    placeholder="👤"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Engagement Level *</label>
+                  <select
+                    value={newStakeholderData.engagement}
+                    onChange={(e) => setNewStakeholderData({...newStakeholderData, engagement: e.target.value})}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Priority *</label>
+                  <select
+                    value={newStakeholderData.priority}
+                    onChange={(e) => setNewStakeholderData({...newStakeholderData, priority: e.target.value})}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Description *</label>
+                <textarea
+                  required
+                  value={newStakeholderData.description}
+                  onChange={(e) => setNewStakeholderData({...newStakeholderData, description: e.target.value})}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  rows="3"
+                  placeholder="Enter stakeholder description"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Key Concerns (comma-separated)</label>
+                <input
+                  type="text"
+                  value={newStakeholderData.concerns}
+                  onChange={(e) => setNewStakeholderData({...newStakeholderData, concerns: e.target.value})}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="e.g., Financial Performance, ESG Risks, Strategy"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Contact Email</label>
+                <input
+                  type="email"
+                  value={newStakeholderData.email}
+                  onChange={(e) => setNewStakeholderData({...newStakeholderData, email: e.target.value})}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="stakeholder@example.com"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Next Action</label>
+                <input
+                  type="text"
+                  value={newStakeholderData.nextAction}
+                  onChange={(e) => setNewStakeholderData({...newStakeholderData, nextAction: e.target.value})}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="e.g., Schedule Introduction Meeting"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Satisfaction Score: {newStakeholderData.satisfaction}%</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={newStakeholderData.satisfaction}
+                  onChange={(e) => setNewStakeholderData({...newStakeholderData, satisfaction: e.target.value})}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className={`flex-1 py-3 rounded-lg font-medium transition-all ${
+                    isDark 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
+                  }`}
+                >
+                  ✓ Add Stakeholder
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className={`flex-1 py-3 rounded-lg font-medium transition-all ${
+                    isDark 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  }`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fade-in {

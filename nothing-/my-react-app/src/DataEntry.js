@@ -1929,7 +1929,7 @@ function DataEntry() {
                       setValidationResults(validation);
                       setShowValidationPanel(true);
                       
-                      // Push validation errors to notifications
+                      // Push validation notifications
                       const alerts = JSON.parse(localStorage.getItem('recentAlerts') || '[]');
                       
                       if (validation.summary.totalCritical > 0) {
@@ -1982,7 +1982,7 @@ function DataEntry() {
                       
                       localStorage.setItem('recentAlerts', JSON.stringify(alerts));
                     }}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors"
                   >
                     ✓ Validate Data
                   </button>
@@ -2251,70 +2251,221 @@ function DataEntry() {
             <div className={`max-w-4xl w-full max-h-[90vh] overflow-y-auto ${theme.bg.card} rounded-xl shadow-2xl`}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className={`text-2xl font-bold ${theme.text.primary}`}>⚠️ Validation Results</h2>
-                  <button onClick={() => setShowValidationPanel(false)} className="text-2xl">✕</button>
+                  <h2 className={`text-2xl font-bold ${theme.text.primary}`}>
+                    ⚠️ ESG Data Validation Results
+                  </h2>
+                  <button 
+                    onClick={() => setShowValidationPanel(false)} 
+                    className={`text-2xl ${theme.text.secondary} hover:${theme.text.primary} transition-colors`}
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className={`p-4 rounded-lg ${validationResults.summary.totalCritical > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+                  <div className={`p-4 rounded-lg ${validationResults.summary.totalCritical > 0 ? 'bg-red-100 border-2 border-red-500' : 'bg-gray-100'}`}>
                     <div className="text-2xl font-bold text-red-600">{validationResults.summary.totalCritical}</div>
-                    <div className="text-sm">Critical Issues</div>
+                    <div className="text-sm font-medium">Critical Issues</div>
+                    <div className="text-xs text-gray-600 mt-1">Requires immediate action</div>
                   </div>
-                  <div className={`p-4 rounded-lg ${validationResults.summary.totalErrors > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                  <div className={`p-4 rounded-lg ${validationResults.summary.totalErrors > 0 ? 'bg-orange-100 border-2 border-orange-500' : 'bg-gray-100'}`}>
                     <div className="text-2xl font-bold text-orange-600">{validationResults.summary.totalErrors}</div>
-                    <div className="text-sm">Errors</div>
+                    <div className="text-sm font-medium">Errors</div>
+                    <div className="text-xs text-gray-600 mt-1">Must be fixed before submission</div>
                   </div>
-                  <div className={`p-4 rounded-lg ${validationResults.summary.totalWarnings > 0 ? 'bg-yellow-100' : 'bg-gray-100'}`}>
+                  <div className={`p-4 rounded-lg ${validationResults.summary.totalWarnings > 0 ? 'bg-yellow-100 border-2 border-yellow-500' : 'bg-gray-100'}`}>
                     <div className="text-2xl font-bold text-yellow-600">{validationResults.summary.totalWarnings}</div>
-                    <div className="text-sm">Warnings</div>
+                    <div className="text-sm font-medium">Warnings</div>
+                    <div className="text-xs text-gray-600 mt-1">Recommended to review</div>
                   </div>
                 </div>
 
-                <div className={`p-4 rounded-lg ${theme.bg.subtle} mb-6`}>
-                  <h3 className={`font-semibold ${theme.text.primary} mb-2`}>GRI Completeness: {validationResults.summary.griCompletenessScore}%</h3>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div className="bg-green-500 h-3 rounded-full" style={{width: `${validationResults.summary.griCompletenessScore}%`}}></div>
+                <div className={`p-4 rounded-lg ${theme.bg.subtle} mb-6 border-l-4 border-blue-500`}>
+                  <h3 className={`font-semibold ${theme.text.primary} mb-2 flex items-center gap-2`}>
+                    📊 Framework Completeness Analysis
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">GRI Completeness:</span>
+                        <span className={`text-lg font-bold ${
+                          validationResults.summary.griCompletenessScore >= 80 ? 'text-green-600' :
+                          validationResults.summary.griCompletenessScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {validationResults.summary.griCompletenessScore}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div 
+                          className={`h-3 rounded-full transition-all duration-500 ${
+                            validationResults.summary.griCompletenessScore >= 80 ? 'bg-green-500' :
+                            validationResults.summary.griCompletenessScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                          style={{width: `${validationResults.summary.griCompletenessScore}%`}}
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span>Required Fields:</span>
+                          <span className="font-medium">
+                            {validationResults.griCompleteness?.overallCompleteness?.required || 0}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Recommended Fields:</span>
+                          <span className="font-medium">
+                            {validationResults.griCompleteness?.overallCompleteness?.recommended || 0}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
+                {/* Critical Issues Section */}
+                {validationResults.thresholds.filter(a => a.severity === 'critical').length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
+                      🚨 Critical Issues (Immediate Action Required)
+                    </h3>
+                    <div className="space-y-2">
+                      {validationResults.thresholds.filter(a => a.severity === 'critical').map((alert, i) => (
+                        <div key={i} className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-medium text-red-800">{alert.field}</div>
+                              <div className="text-sm text-red-700 mt-1">{alert.message}</div>
+                            </div>
+                            <span className="px-2 py-1 bg-red-200 text-red-800 text-xs rounded-full font-medium">
+                              CRITICAL
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cross-Field Errors */}
                 {validationResults.crossField.errors.length > 0 && (
                   <div className="mb-4">
-                    <h3 className="font-semibold text-red-600 mb-2">Cross-Field Errors</h3>
-                    {validationResults.crossField.errors.map((err, i) => (
-                      <div key={i} className="p-3 bg-red-50 border-l-4 border-red-500 mb-2">
-                        <div className="font-medium">{err.field}</div>
-                        <div className="text-sm">{err.message}</div>
-                      </div>
-                    ))}
+                    <h3 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
+                      ❌ Data Consistency Errors
+                    </h3>
+                    <div className="space-y-2">
+                      {validationResults.crossField.errors.map((err, i) => (
+                        <div key={i} className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-medium text-red-800">{err.field}</div>
+                              <div className="text-sm text-red-700 mt-1">{err.message}</div>
+                            </div>
+                            <span className="px-2 py-1 bg-red-200 text-red-800 text-xs rounded-full font-medium">
+                              ERROR
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {validationResults.thresholds.filter(a => a.severity === 'critical' || a.severity === 'error').length > 0 && (
+                {/* Threshold Violations */}
+                {validationResults.thresholds.filter(a => a.severity === 'error').length > 0 && (
                   <div className="mb-4">
-                    <h3 className="font-semibold text-orange-600 mb-2">Threshold Violations</h3>
-                    {validationResults.thresholds.filter(a => a.severity === 'critical' || a.severity === 'error').map((alert, i) => (
-                      <div key={i} className={`p-3 border-l-4 mb-2 ${alert.severity === 'critical' ? 'bg-red-50 border-red-500' : 'bg-orange-50 border-orange-500'}`}>
-                        <div className="font-medium">{alert.field}</div>
-                        <div className="text-sm">{alert.message}</div>
-                      </div>
-                    ))}
+                    <h3 className="font-semibold text-orange-600 mb-3 flex items-center gap-2">
+                      ⚠️ Threshold Violations
+                    </h3>
+                    <div className="space-y-2">
+                      {validationResults.thresholds.filter(a => a.severity === 'error').map((alert, i) => (
+                        <div key={i} className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-medium text-orange-800">{alert.field}</div>
+                              <div className="text-sm text-orange-700 mt-1">{alert.message}</div>
+                            </div>
+                            <span className="px-2 py-1 bg-orange-200 text-orange-800 text-xs rounded-full font-medium">
+                              VIOLATION
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {validationResults.crossField.warnings.length > 0 && (
+                {/* Warnings Section */}
+                {(validationResults.crossField.warnings.length > 0 || validationResults.thresholds.filter(a => a.severity === 'warning').length > 0) && (
                   <div className="mb-4">
-                    <h3 className="font-semibold text-yellow-600 mb-2">Warnings</h3>
-                    {validationResults.crossField.warnings.map((warn, i) => (
-                      <div key={i} className="p-3 bg-yellow-50 border-l-4 border-yellow-500 mb-2">
-                        <div className="font-medium">{warn.field}</div>
-                        <div className="text-sm">{warn.message}</div>
-                      </div>
-                    ))}
+                    <h3 className="font-semibold text-yellow-600 mb-3 flex items-center gap-2">
+                      ⚡ Warnings & Recommendations
+                    </h3>
+                    <div className="space-y-2">
+                      {validationResults.crossField.warnings.map((warn, i) => (
+                        <div key={i} className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-medium text-yellow-800">{warn.field}</div>
+                              <div className="text-sm text-yellow-700 mt-1">{warn.message}</div>
+                            </div>
+                            <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full font-medium">
+                              WARNING
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      {validationResults.thresholds.filter(a => a.severity === 'warning').map((alert, i) => (
+                        <div key={i} className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-medium text-yellow-800">{alert.field}</div>
+                              <div className="text-sm text-yellow-700 mt-1">{alert.message}</div>
+                            </div>
+                            <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full font-medium">
+                              THRESHOLD
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                <div className="flex gap-3 justify-end mt-6">
-                  <button onClick={() => setShowValidationPanel(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Close</button>
+                {/* Success Message */}
+                {validationResults.summary.totalCritical === 0 && validationResults.summary.totalErrors === 0 && validationResults.summary.totalWarnings === 0 && (
+                  <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">✅</span>
+                      <div>
+                        <div className="font-semibold text-green-800">Validation Passed!</div>
+                        <div className="text-sm text-green-700">All ESG data validation checks passed successfully.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-gray-200">
+                  <button 
+                    onClick={() => setShowValidationPanel(false)} 
+                    className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-medium transition-colors"
+                  >
+                    Close
+                  </button>
+                  {validationResults.summary.totalCritical === 0 && validationResults.summary.totalErrors === 0 && (
+                    <button 
+                      onClick={() => {
+                        setShowValidationPanel(false);
+                        // Auto-proceed to submission if validation passes
+                        showToast('Validation passed! Ready for submission.', 'success');
+                      }}
+                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      ✓ Proceed to Submit
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

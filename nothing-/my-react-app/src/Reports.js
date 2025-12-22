@@ -1569,47 +1569,7 @@ function Reports() {
 
 
 
-        {/* Sector-Specific Banner */}
-        <div className={`mb-6 rounded-2xl p-4 border transition-all duration-300 ${
-          isDark 
-            ? `bg-gradient-to-r from-${sectorConfig?.color || 'blue'}-900/50 to-purple-900/50 border-${sectorConfig?.color || 'blue'}-700/50` 
-            : `bg-gradient-to-r from-${sectorConfig?.color || 'blue'}-50 to-purple-50 border-${sectorConfig?.color || 'blue'}-200`
-        }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${
-                sectorConfig?.color === 'amber' ? 'from-amber-500 to-orange-500' :
-                sectorConfig?.color === 'pink' ? 'from-pink-500 to-rose-500' :
-                sectorConfig?.color === 'blue' ? 'from-blue-500 to-indigo-500' :
-                'from-gray-500 to-gray-600'
-              } flex items-center justify-center text-white text-lg shadow-lg`}>
-                {sectorConfig?.icon || '🏢'}
-              </div>
-              <div>
-                <h3 className={`font-semibold ${theme.text.primary}`}>
-                  {sectorConfig?.name || 'General'} Sector Reports
-                </h3>
-                <p className={`text-sm ${theme.text.secondary}`}>
-                  Specialized reporting templates and compliance modules for {sectorConfig?.name?.toLowerCase() || 'your industry'}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => window.location.href = '/sectors'}
-                className={`px-4 py-2 rounded-lg border transition-colors ${theme.border.primary} ${theme.hover.card}`}
-              >
-                Change Sector
-              </button>
-              <button
-                onClick={() => window.location.href = `/sector/${currentSector}`}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                Sector Dashboard →
-              </button>
-            </div>
-          </div>
-        </div>
+
         <div className={`mb-6 p-4 rounded-lg ${theme.bg.subtle} border-l-4 border-blue-500`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1643,22 +1603,17 @@ function Reports() {
                       📝 Add Data
                     </button>
                     <button
-                      onClick={analyzeFrameworkCompliance}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap"
+                      onClick={async () => {
+                        const normalizedData = normalizeData(data);
+                        const options = { companyName: data[0]?.companyName || 'Company', reportPeriod: new Date().getFullYear() };
+                        const pdf = generateGRIPDF(normalizedData, options);
+                        pdf.save(`GRI-Standards-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+                        showToast('GRI Standards report generated successfully!', 'success');
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                      disabled={data.length === 0}
                     >
-                      📋 Framework Compliance
-                    </button>
-                    <button
-                      onClick={() => setShowFrameworkReports(true)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm whitespace-nowrap"
-                    >
-                      📄 Framework Reports
-                    </button>
-                    <button
-                      onClick={() => setShowFrameworkHub(true)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm whitespace-nowrap"
-                    >
-                      🌐 Framework Hub
+                      🌍 GRI Report
                     </button>
                     {canDeleteData && (
                       <button

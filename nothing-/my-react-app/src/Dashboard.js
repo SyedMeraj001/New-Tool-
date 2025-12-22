@@ -298,47 +298,7 @@ function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-6">
-        {/* Sector Selection Banner */}
-        <div className={`mb-6 rounded-2xl p-4 border transition-all duration-300 ${
-          isDark 
-            ? 'bg-gradient-to-r from-blue-900/50 to-purple-900/50 border-blue-700/50' 
-            : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${
-                sectorConfig?.color === 'amber' ? 'from-amber-500 to-orange-500' :
-                sectorConfig?.color === 'pink' ? 'from-pink-500 to-rose-500' :
-                sectorConfig?.color === 'blue' ? 'from-blue-500 to-indigo-500' :
-                'from-gray-500 to-gray-600'
-              } flex items-center justify-center text-white text-lg shadow-lg`}>
-                {sectorConfig?.icon || '🏢'}
-              </div>
-              <div>
-                <h3 className={`font-semibold ${theme.text.primary}`}>
-                  Current Sector: {sectorConfig?.name || 'Manufacturing'}
-                </h3>
-                <p className={`text-sm ${theme.text.secondary}`}>
-                  Access sector-specific ESG tools and templates
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate('/sectors')}
-                className={`px-4 py-2 rounded-lg border transition-colors ${theme.border.primary} ${theme.hover.card}`}
-              >
-                Change Sector
-              </button>
-              <button
-                onClick={() => navigate(`/sector/${currentSector}`)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                Sector Dashboard →
-              </button>
-            </div>
-          </div>
-        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard 
             icon="⭐" 

@@ -189,7 +189,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
       isDark 
         ? 'bg-gray-900/95 border-gray-700' 
-        : 'bg-gradient-to-r from-blue-600 to-indigo-700 border-blue-500'
+        : 'bg-gradient-to-r from-green-600 to-emerald-700 border-green-500'
     } backdrop-blur-xl border-b shadow-sm`}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
@@ -202,7 +202,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
               <h1 className={`text-lg font-bold ${
                 isDark ? 'text-white' : 'text-white'
               }`}>E-S-Genius</h1>
-              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-blue-100'}`}>ESG Platform</p>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-green-100'}`}>ESG Platform</p>
             </div>
           </div>
 
@@ -220,7 +220,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                       ? (isDark ? 'bg-blue-600 text-white' : 'bg-white/20 text-white')
                       : isDark
                         ? 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-                        : 'text-blue-100 hover:text-white hover:bg-white/10'
+                        : 'text-green-100 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   <span className="text-sm">{item.icon}</span>
@@ -238,7 +238,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
               className={`p-2 rounded-lg transition-all duration-200 ${
                 isDark 
                   ? 'text-yellow-400 hover:bg-gray-700/50' 
-                  : 'text-blue-100 hover:bg-white/10'
+                  : 'text-green-100 hover:bg-white/10'
               }`}
             >
               <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
@@ -251,7 +251,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                 className={`relative p-2 rounded-lg transition-all duration-200 ${
                   isDark 
                     ? 'text-gray-300 hover:bg-gray-700/50' 
-                    : 'text-blue-100 hover:bg-white/10'
+                    : 'text-green-100 hover:bg-white/10'
                 }`}
               >
                 <span className="text-lg">🔔</span>

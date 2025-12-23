@@ -342,13 +342,46 @@ const WorkflowDashboard = () => {
                               Submitted by {workflow.submittedBy} • {new Date(workflow.createdAt).toLocaleDateString()}
                             </p>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            workflow.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            workflow.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {workflow.status.toUpperCase()}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              workflow.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              workflow.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {workflow.status.toUpperCase()}
+                            </span>
+                            {workflow.status === 'pending' && canApproveReject() && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    const updatedWorkflows = workflows.map(w => 
+                                      w.id === workflow.id ? { ...w, status: 'approved' } : w
+                                    );
+                                    setWorkflows(updatedWorkflows);
+                                    localStorage.setItem('approvalWorkflows', JSON.stringify(updatedWorkflows));
+                                  }}
+                                  className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                >
+                                  ✓ Approve
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const reason = prompt('Please provide a reason for rejection:');
+                                    if (reason && reason.trim()) {
+                                      const updatedWorkflows = workflows.map(w => 
+                                        w.id === workflow.id ? { ...w, status: 'rejected', rejectionReason: reason.trim() } : w
+                                      );
+                                      setWorkflows(updatedWorkflows);
+                                      localStorage.setItem('approvalWorkflows', JSON.stringify(updatedWorkflows));
+                                    }
+                                  }}
+                                  className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                >
+                                  ✗ Reject
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))

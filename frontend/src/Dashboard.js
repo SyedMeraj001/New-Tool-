@@ -14,6 +14,7 @@ import EnhancedDataEntry from "./modules/EnhancedDataEntry";
 import ComplianceManager from "./components/ComplianceManager";
 import AdvancedBenchmarking from "./components/AdvancedBenchmarking";
 import AuditTrailViewer from "./components/AuditTrailViewer";
+import UserManagement from "./UserManagement";
 
 
 // Data normalization functions from Reports.js
@@ -172,6 +173,7 @@ function Dashboard() {
   const [showComplianceManager, setShowComplianceManager] = useState(false);
   const [showBenchmarking, setShowBenchmarking] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
   const [reportsData, setReportsData] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -347,8 +349,8 @@ function Dashboard() {
             boxShadow: isDark ? '' : '0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3)'
           }}>
             <div className="flex items-center gap-2 mb-6">
-              <span className="text-2xl">⚡</span>
-              <h2 className={`text-lg font-semibold transition-colors duration-300 ${theme.text.primary}`}>Quick Actions</h2>
+              <span className="text-2xl">🎯</span>
+              <h2 className={`text-lg font-semibold transition-colors duration-300 ${theme.text.primary}`}>Action Center</h2>
             </div>
             
             <div className="space-y-3">
@@ -370,18 +372,6 @@ function Dashboard() {
                 
                 {showPrimaryActions && (
                   <div className="mt-3 space-y-2 animate-fade-in">
-                    <Link to="/data-entry" className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
-                      isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
-                    }`}>
-                      <span className="text-lg group-hover:scale-110 transition-transform duration-200">⚡</span>
-                      <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>Add New Data</span>
-                    </Link>
-                    <Link to="/analytics" className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
-                      isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
-                    }`}>
-                      <span className="text-lg group-hover:scale-110 transition-transform duration-200">📊</span>
-                      <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>View Analytics</span>
-                    </Link>
                     <div onClick={() => setShowEnhancedEntry(true)} className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
                       isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
                     }`}>
@@ -393,12 +383,6 @@ function Dashboard() {
                     }`}>
                       <span className="text-lg group-hover:scale-110 transition-transform duration-200">📁</span>
                       <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>Evidence Management</span>
-                    </Link>
-                    <Link to="/reports" className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
-                      isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
-                    }`}>
-                      <span className="text-lg group-hover:scale-110 transition-transform duration-200">📋</span>
-                      <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>Generate Report</span>
                     </Link>
                   </div>
                 )}
@@ -423,13 +407,15 @@ function Dashboard() {
                 {showManagementActions && (
                   <div className="mt-3 space-y-2 animate-fade-in">
                     {[
-                      { icon: '✓', label: 'Compliance', link: '/compliance' },
-                      { icon: '👥', label: 'Stakeholders', link: '/stakeholders' },
-                      { icon: '⚖️', label: 'Regulatory', link: '/regulatory' },
-                      { icon: '📋', label: 'Workflow & Approval', link: '/workflow' },
-                      { icon: '📅', label: 'Compliance Manager', action: () => setShowComplianceManager(true) }
-                    ].map((action, index) => (
-                      action.link ? (
+                      { icon: '📅', label: 'Compliance Manager', action: () => setShowComplianceManager(true) },
+                      { icon: '👥', label: 'User Management', action: () => setShowUserManagement(true), superAdminOnly: true }
+                    ].map((action, index) => {
+                      // Check if super admin only and current user is not super admin
+                      if (action.superAdminOnly && localStorage.getItem('userRole') !== 'super_admin') {
+                        return null;
+                      }
+                      
+                      return action.link ? (
                         <Link key={index} to={action.link} className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
                           isDark 
                             ? 'hover:bg-gray-700/50' 
@@ -447,8 +433,8 @@ function Dashboard() {
                           <span className="text-lg group-hover:scale-110 transition-transform duration-200">{action.icon}</span>
                           <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>{action.label}</span>
                         </div>
-                      )
-                    ))}
+                      );
+                    }).filter(Boolean)}
                   </div>
                 )}
               </div>
@@ -472,10 +458,6 @@ function Dashboard() {
                 {showAdvancedActions && (
                   <div className="mt-3 space-y-2 animate-fade-in">
                     {[
-                      { icon: '🎯', label: 'Materiality Assessment', link: '/materiality-assessment' },
-                      { icon: '🔗', label: 'Supply Chain ESG', link: '/supply-chain' },
-                      { icon: '🔌', label: 'Integration Dashboard', link: '/integrations' },
-                      { icon: '📊', label: 'Advanced Benchmarking', action: () => setShowBenchmarking(true) },
                       { icon: '📋', label: 'Audit Trail', action: () => setShowAuditTrail(true) },
                       { icon: '🧮', label: 'ESG Calculators', link: '/calculators' }
                     ].map((action, index) => (
@@ -660,6 +642,26 @@ function Dashboard() {
       {/* Audit Trail Modal */}
       {showAuditTrail && (
         <AuditTrailViewer onClose={() => setShowAuditTrail(false)} />
+      )}
+      
+      {/* User Management Modal */}
+      {showUserManagement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-6xl max-h-[90vh] overflow-auto rounded-2xl ${
+            isDark ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className={`text-xl font-semibold ${theme.text.primary}`}>User Management</h2>
+              <button 
+                onClick={() => setShowUserManagement(false)}
+                className={`p-2 rounded-lg transition-colors ${theme.hover.card}`}
+              >
+                <span className="text-xl">×</span>
+              </button>
+            </div>
+            <UserManagement />
+          </div>
+        </div>
       )}
     </div>
   );

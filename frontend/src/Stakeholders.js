@@ -592,17 +592,17 @@ const Stakeholders = () => {
                       }}
                       className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                         isDark 
-                          ? 'bg-red-600 hover:bg-red-700 text-white'
-                          : 'bg-red-500 hover:bg-red-600 text-white'
+                          ? 'bg-white hover:bg-gray-100 text-red-600 border border-red-600'
+                          : 'bg-white hover:bg-gray-50 text-red-600 border border-red-600'
                       }`}
                       title="Delete Stakeholder"
                     >
                       Delete
                     </button>
                     <div className={`text-2xl transition-transform duration-300 ${
-                      selectedStakeholder === stakeholder.id ? 'rotate-180' : ''
+                      selectedStakeholder === stakeholder.id ? 'rotate-90' : ''
                     }`}>
-                      ⌄
+                      ▶
                     </div>
                   </div>
                 </div>
@@ -710,7 +710,16 @@ const Stakeholders = () => {
                     )}
 
                     <div className="flex gap-2 pt-2">
-                      <button className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (stakeholder.contactEmail) {
+                            window.location.href = `mailto:${stakeholder.contactEmail}`;
+                          } else {
+                            alert('No email address available for this stakeholder');
+                          }
+                        }}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                         isDark 
                           ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -752,44 +761,6 @@ const Stakeholders = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Action Center */}
-        <div className={`mt-8 p-6 rounded-2xl border ${
-          isDark 
-            ? 'bg-gray-800/80 border-gray-700/50' 
-            : 'bg-white/80 border-white/50'
-        } backdrop-blur-xl`}>
-          <h3 className={`text-xl font-bold mb-4 ${theme.text.primary}`}>📋 Action Center</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className={`p-4 rounded-xl text-left transition-all hover:scale-105 ${
-              isDark 
-                ? 'bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800' 
-                : 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
-            } text-white shadow-lg`}>
-              <div className="text-2xl mb-2">📊</div>
-              <div className="font-semibold">Generate Report</div>
-              <div className="text-sm opacity-90">Stakeholder engagement summary</div>
-            </button>
-            <button className={`p-4 rounded-xl text-left transition-all hover:scale-105 ${
-              isDark 
-                ? 'bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800' 
-                : 'bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
-            } text-white shadow-lg`}>
-              <div className="text-2xl mb-2">📅</div>
-              <div className="font-semibold">Schedule Meetings</div>
-              <div className="text-sm opacity-90">Plan stakeholder engagements</div>
-            </button>
-            <button className={`p-4 rounded-xl text-left transition-all hover:scale-105 ${
-              isDark 
-                ? 'bg-gradient-to-br from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800' 
-                : 'bg-gradient-to-br from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
-            } text-white shadow-lg`}>
-              <div className="text-2xl mb-2">📈</div>
-              <div className="font-semibold">Analytics</div>
-              <div className="text-sm opacity-90">Engagement trends & insights</div>
-            </button>
-          </div>
         </div>
       </main>
 

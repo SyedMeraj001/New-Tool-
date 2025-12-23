@@ -1114,236 +1114,35 @@ function Reports() {
   };
   
   const exportPDF = async () => {
-    // Use enhanced compliance ESG PDF generator
-    const esgData = await getStoredData();
-    const normalizedData = normalizeData(esgData);
+    setIsGenerating(true);
+    try {
+      // Use enhanced compliance ESG PDF generator
+      const esgData = await getStoredData();
+      const normalizedData = normalizeData(esgData);
 
-    const companyName = (esgData && esgData.length > 0 && esgData[0].companyName) || 'Company';
-    const sector = (esgData && esgData.length > 0 && esgData[0].sector) || localStorage.getItem('currentSector') || 'General';
-    const region = (esgData && esgData.length > 0 && esgData[0].region) || 'Global';
-    
-    const pdf = generateProfessionalWhitePaper(selectedReport, normalizedData, {
-      companyName,
-      reportPeriod: selectedYear || new Date().getFullYear(),
-      authorName: 'ESG Team',
-      authorTitle: 'Sustainability Director',
-      sector: sector.charAt(0).toUpperCase() + sector.slice(1),
-      region
-    });
+      const companyName = (esgData && esgData.length > 0 && esgData[0].companyName) || 'E-S-GENIUS';
+      const sector = (esgData && esgData.length > 0 && esgData[0].sector) || localStorage.getItem('currentSector') || 'General';
+      const region = (esgData && esgData.length > 0 && esgData[0].region) || 'Global';
+      
+      const pdf = await generateProfessionalWhitePaper(selectedReport, normalizedData, {
+        companyName,
+        reportPeriod: selectedYear || new Date().getFullYear(),
+        authorName: 'ESG Team',
+        authorTitle: 'Sustainability Director',
+        sector: sector.charAt(0).toUpperCase() + sector.slice(1),
+        region,
+        logoPath: companyLogo // Add logo to PDF options
+      });
 
-    const filename = `ESG-Compliance-Report-${selectedReport.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
-    pdf.save(filename);
-    showToast(`ESG Compliance ${selectedReport} report generated successfully!`, 'success');
-    return;
-    
-    // Fallback to original generator
-    const pdf2 = new jsPDF();
-    const normalized = normalizeData(data);
-    const envMetrics = getEnvironmentalMetrics();
-    const socialMetrics = getSocialMetrics();
-    const govMetrics = getGovernanceMetrics();
-    const calcMetrics = getCalculatedMetrics();
-    
-    // Company Header
-    pdf.setFontSize(24);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('ESG SUSTAINABILITY REPORT', 20, 25);
-    
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(`Framework: ${selectedReport}`, 20, 40);
-    pdf.setFontSize(12);
-    pdf.text(`Report Period: ${new Date().getFullYear()}`, 20, 50);
-    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 60);
-    pdf.text(`Total Data Points: ${normalized.length}`, 20, 70);
-    
-    // Executive Summary
-    let yPos = 90;
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('EXECUTIVE SUMMARY', 20, yPos);
-    yPos += 15;
-    
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 0, 0);
-    if (overallSummary.overall !== '-') {
-      pdf.text(`Overall ESG Performance Score: ${overallSummary.overall}/100`, 20, yPos);
-      yPos += 10;
+      const filename = `ESG-Compliance-Report-${selectedReport.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
+      showToast(`ESG Compliance ${selectedReport} report generated successfully!`, 'success');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      showToast('Failed to generate PDF report', 'error');
+    } finally {
+      setIsGenerating(false);
     }
-    
-    // Performance by Pillar
-    pdf.text('Performance by ESG Pillar:', 20, yPos);
-    yPos += 10;
-    if (overallSummary.environmental !== '-') {
-      pdf.text(`• Environmental: ${overallSummary.environmental}/100 - ${getPerformanceRating(overallSummary.environmental)}`, 25, yPos);
-      yPos += 8;
-    }
-    if (overallSummary.social !== '-') {
-      pdf.text(`• Social: ${overallSummary.social}/100 - ${getPerformanceRating(overallSummary.social)}`, 25, yPos);
-      yPos += 8;
-    }
-    if (overallSummary.governance !== '-') {
-      pdf.text(`• Governance: ${overallSummary.governance}/100 - ${getPerformanceRating(overallSummary.governance)}`, 25, yPos);
-      yPos += 8;
-    }
-    
-    yPos += 10;
-    pdf.text(`Key Highlights: ${normalized.length} metrics tracked across ${yearlyData.length} reporting periods`, 20, yPos);
-    
-    // Environmental Section
-    yPos += 20;
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('ENVIRONMENTAL PERFORMANCE', 20, yPos);
-    yPos += 15;
-    
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 0, 0);
-    envMetrics.forEach(metric => {
-      if (yPos > 270) { pdf.addPage(); yPos = 30; }
-      pdf.text(`${metric.name}: ${metric.value}`, 20, yPos);
-      yPos += 8;
-    });
-    
-    // Social Section
-    yPos += 15;
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('SOCIAL PERFORMANCE', 20, yPos);
-    yPos += 15;
-    
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 0, 0);
-    socialMetrics.forEach(metric => {
-      if (yPos > 270) { pdf.addPage(); yPos = 30; }
-      pdf.text(`${metric.name}: ${metric.value}`, 20, yPos);
-      yPos += 8;
-    });
-    
-    // Governance Section
-    yPos += 15;
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('GOVERNANCE PERFORMANCE', 20, yPos);
-    yPos += 15;
-    
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 0, 0);
-    govMetrics.forEach(metric => {
-      if (yPos > 270) { pdf.addPage(); yPos = 30; }
-      pdf.text(`${metric.name}: ${metric.value}`, 20, yPos);
-      yPos += 8;
-    });
-    
-    // Calculated Metrics
-    if (calcMetrics.length > 0) {
-      yPos += 15;
-      if (yPos > 250) { pdf.addPage(); yPos = 30; }
-      pdf.setFontSize(16);
-      pdf.setTextColor(0, 102, 51);
-      pdf.text('KEY PERFORMANCE INDICATORS', 20, yPos);
-      yPos += 15;
-      
-      pdf.setFontSize(12);
-      pdf.setTextColor(0, 0, 0);
-      calcMetrics.forEach(metric => {
-        if (yPos > 270) { pdf.addPage(); yPos = 30; }
-        pdf.text(`${metric.name}: ${metric.value}`, 20, yPos);
-        yPos += 8;
-      });
-    }
-    
-    // Year-over-Year Analysis
-    if (yearlyData.length > 0) {
-      pdf.addPage();
-      yPos = 30;
-      pdf.setFontSize(16);
-      pdf.setTextColor(0, 102, 51);
-      pdf.text('YEAR-OVER-YEAR PERFORMANCE ANALYSIS', 20, yPos);
-      yPos += 20;
-      
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-      // Table headers
-      pdf.text('Year', 20, yPos);
-      pdf.text('Environmental', 60, yPos);
-      pdf.text('Social', 100, yPos);
-      pdf.text('Governance', 140, yPos);
-      pdf.text('Overall', 180, yPos);
-      yPos += 10;
-      
-      // Draw header line
-      pdf.line(20, yPos - 2, 200, yPos - 2);
-      
-      // Table data
-      yearlyData.forEach(row => {
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 30;
-        }
-        pdf.text(row.year.toString(), 20, yPos);
-        pdf.text(row.environmental.toString(), 60, yPos);
-        pdf.text(row.social.toString(), 100, yPos);
-        pdf.text(row.governance.toString(), 140, yPos);
-        pdf.text(row.average.toString(), 180, yPos);
-        yPos += 8;
-      });
-    }
-    
-    // Compliance Status
-    pdf.addPage();
-    yPos = 30;
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('REGULATORY COMPLIANCE STATUS', 20, yPos);
-    yPos += 20;
-    
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('This report demonstrates compliance with:', 20, yPos);
-    yPos += 15;
-    
-    if (normalized.length > 0) {
-      const frameworks = ['GRI Standards', 'SEBI BRSR', 'TCFD Guidelines', 'SASB Standards'];
-      frameworks.forEach(framework => {
-        pdf.text(`• ${framework}`, 25, yPos);
-        yPos += 8;
-      });
-    } else {
-      pdf.text('• No compliance data available', 25, yPos);
-      yPos += 8;
-    }
-    
-    yPos += 10;
-    pdf.text('Data Quality Assurance:', 20, yPos);
-    yPos += 10;
-    if (normalized.length > 0) {
-      pdf.text(`• ${normalized.length} verified data points`, 25, yPos);
-      yPos += 8;
-      pdf.text('• Third-party verification where applicable', 25, yPos);
-      yPos += 8;
-      pdf.text('• Audit trail maintained for all entries', 25, yPos);
-    } else {
-      pdf.text('• No data points available for verification', 25, yPos);
-      yPos += 8;
-    }
-    
-    // Footer
-    yPos += 30;
-    pdf.setFontSize(10);
-    pdf.setTextColor(128, 128, 128);
-    pdf.text('This report was generated automatically from verified ESG data.', 20, yPos);
-    pdf.text(`Report ID: ESG-${Date.now()}`, 20, yPos + 10);
-    
-    // Save PDF with proper filename
-    const reportFilename = `ESG-Report-${selectedReport.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
-    pdf.save(reportFilename);
-    
-    // Show success message
-    showToast(`${selectedReport} report generated successfully!`, 'success');
   };
   
   const getPerformanceRating = (score) => {
@@ -1575,24 +1374,6 @@ function Reports() {
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
                     >
                       📝 Add Data
-                    </button>
-                    <button
-                      onClick={analyzeFrameworkCompliance}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap"
-                    >
-                      📋 Framework Compliance
-                    </button>
-                    <button
-                      onClick={() => setShowFrameworkReports(true)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm whitespace-nowrap"
-                    >
-                      📄 Framework Reports
-                    </button>
-                    <button
-                      onClick={() => setShowFrameworkHub(true)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm whitespace-nowrap"
-                    >
-                      🌐 Framework Hub
                     </button>
                     {canDeleteData && (
                       <button

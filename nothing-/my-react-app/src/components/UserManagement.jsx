@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { getThemeClasses } from '../utils/themeUtils';
 import { USER_ROLES, ROLE_DISPLAY_NAMES, hasPermission, getUserRole, PERMISSIONS } from '../utils/rbac';
+import ProfessionalHeader from './ProfessionalHeader';
+import { useNavigate } from 'react-router-dom';
 
 const UserManagement = () => {
-  const { isDark } = useTheme();
+  const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
+  const theme = getThemeClasses(isDark);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,6 +21,11 @@ const UserManagement = () => {
     role: USER_ROLES.DATA_ENTRY
   });
   const userRole = getUserRole();
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    navigate("/login");
+  };
 
   useEffect(() => {
     loadUsers();
@@ -136,63 +146,69 @@ const UserManagement = () => {
   }
 
   return (
-    <div className={`min-h-screen p-6 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto">
+    <div className={`min-h-screen transition-all duration-500 ${
+      isDark ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
+      <ProfessionalHeader 
+        onLogout={handleLogout}
+        isDark={isDark}
+        toggleTheme={toggleTheme}
+      />
+
+      <main className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            👥 User Management
-          </h1>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Manage system users and their roles
-          </p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <div className="text-2xl mb-2">👤</div>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {stats.total}
-            </div>
-            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Total Users
+        <div className={`rounded-xl p-6 mb-6 border ${
+          isDark 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        } shadow-lg`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-lg ${
+                isDark ? 'bg-blue-600' : 'bg-blue-600'
+              } shadow-md`}>
+                <span className="text-2xl text-white">👥</span>
+              </div>
+              <div>
+                <h1 className={`text-3xl font-bold ${theme.text.primary} mb-2`}>User Management</h1>
+                <p className={`${theme.text.secondary} text-lg`}>Manage system users and their roles</p>
+              </div>
             </div>
           </div>
 
-          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <div className="text-2xl mb-2">🔴</div>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {stats[USER_ROLES.SUPER_ADMIN]}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`p-3 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            } border border-gray-300`}>
+              <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+              <div className={`text-sm ${theme.text.secondary}`}>Total Users</div>
             </div>
-            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Super Admins
+            <div className={`p-3 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            } border border-gray-300`}>
+              <div className="text-2xl font-bold text-red-600">{stats[USER_ROLES.SUPER_ADMIN]}</div>
+              <div className={`text-sm ${theme.text.secondary}`}>Super Admins</div>
             </div>
-          </div>
-
-          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <div className="text-2xl mb-2">🔵</div>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {stats[USER_ROLES.SUPERVISOR]}
+            <div className={`p-3 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            } border border-gray-300`}>
+              <div className="text-2xl font-bold text-blue-600">{stats[USER_ROLES.SUPERVISOR]}</div>
+              <div className={`text-sm ${theme.text.secondary}`}>Supervisors</div>
             </div>
-            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Supervisors
-            </div>
-          </div>
-
-          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <div className="text-2xl mb-2">🟢</div>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {stats[USER_ROLES.DATA_ENTRY]}
-            </div>
-            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Data Entry Users
+            <div className={`p-3 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            } border border-gray-300`}>
+              <div className="text-2xl font-bold text-green-600">{stats[USER_ROLES.DATA_ENTRY]}</div>
+              <div className={`text-sm ${theme.text.secondary}`}>Data Entry Users</div>
             </div>
           </div>
         </div>
 
         {/* Filters and Actions */}
-        <div className={`p-4 rounded-lg mb-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
+        <div className={`p-4 rounded-lg mb-6 border ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        } shadow-md`}>
           <div className="flex flex-col md:flex-row gap-4">
             <input
               type="text"
@@ -220,18 +236,13 @@ const UserManagement = () => {
               <option value={USER_ROLES.SUPERVISOR}>Supervisor</option>
               <option value={USER_ROLES.DATA_ENTRY}>Data Entry</option>
             </select>
-
-            <button
-              onClick={() => setShowAddUser(true)}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              ➕ Add User
-            </button>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className={`rounded-lg shadow overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`rounded-lg shadow-md overflow-hidden border ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
@@ -275,15 +286,9 @@ const UserManagement = () => {
                       {user.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={user.role}
-                        onChange={(e) => handleUpdateRole(user.email, e.target.value)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleColor(user.role)}`}
-                      >
-                        <option value={USER_ROLES.SUPER_ADMIN}>{ROLE_DISPLAY_NAMES[USER_ROLES.SUPER_ADMIN]}</option>
-                        <option value={USER_ROLES.SUPERVISOR}>{ROLE_DISPLAY_NAMES[USER_ROLES.SUPERVISOR]}</option>
-                        <option value={USER_ROLES.DATA_ENTRY}>{ROLE_DISPLAY_NAMES[USER_ROLES.DATA_ENTRY]}</option>
-                      </select>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleColor(user.role)}`}>
+                        {ROLE_DISPLAY_NAMES[user.role]}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -397,7 +402,7 @@ const UserManagement = () => {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };

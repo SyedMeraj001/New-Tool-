@@ -11,6 +11,8 @@ const Stakeholders = () => {
   const [selectedStakeholder, setSelectedStakeholder] = useState(null);
   const [animationClass, setAnimationClass] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(null);
   const [newStakeholderData, setNewStakeholderData] = useState({
     name: '',
     type: 'External',
@@ -164,7 +166,7 @@ const Stakeholders = () => {
               <div className={`p-4 rounded-2xl ${
                 isDark ? 'bg-gradient-to-br from-purple-600 to-pink-600' : 'bg-gradient-to-br from-indigo-500 to-purple-600'
               } shadow-lg`}>
-                <span className="text-3xl">👥</span>
+                <span className="text-xl">👥</span>
               </div>
               <div>
                 <h1 className={`text-4xl font-bold ${theme.text.primary} mb-2`}>Stakeholder Management</h1>
@@ -233,7 +235,7 @@ const Stakeholders = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-xl bg-gradient-to-br ${getEngagementColor(stakeholder.engagement)} shadow-lg`}>
-                      <span className="text-2xl">{stakeholder.icon}</span>
+                      <span className="text-lg">{stakeholder.icon}</span>
                     </div>
                     <div>
                       <h3 className={`font-bold text-lg ${theme.text.primary} group-hover:text-indigo-600 transition-colors`}>
@@ -250,21 +252,19 @@ const Stakeholders = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setStakeholders(stakeholders.filter(s => s.id !== stakeholder.id));
+                        if (window.confirm(`Are you sure you want to delete ${stakeholder.name}?`)) {
+                          setStakeholders(stakeholders.filter(s => s.id !== stakeholder.id));
+                        }
                       }}
-                      className={`p-2 rounded-lg transition-all hover:scale-110 ${
-                        isDark 
-                          ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300'
-                          : 'bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700'
-                      }`}
+                      className="px-3 py-1 rounded-lg transition-all hover:scale-110 bg-white hover:bg-gray-100 text-red-600 hover:text-red-700 border border-red-600 text-sm font-medium"
                       title="Delete Stakeholder"
                     >
-                      🗑️
+                      Delete
                     </button>
-                    <div className={`text-2xl transition-transform duration-300 ${
+                    <div className={`text-lg transition-transform duration-300 ${
                       selectedStakeholder === stakeholder.id ? 'rotate-180' : ''
                     }`}>
-                      ⌄
+                      🔽
                     </div>
                   </div>
                 </div>
@@ -350,18 +350,36 @@ const Stakeholders = () => {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                      <button className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                        isDark 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Contact button clicked for:', stakeholder.name);
+                          setShowContactModal(stakeholder);
+                        }}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                          isDark 
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25' 
+                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25'
+                        } transform hover:scale-105 active:scale-95`}
+                      >
                         📞 Contact
                       </button>
-                      <button className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                        isDark 
-                          ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                      }`}>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Update button clicked for:', stakeholder.name);
+                          setShowUpdateModal(stakeholder);
+                        }}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                          isDark 
+                            ? 'bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-gray-500/25' 
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-800 shadow-lg hover:shadow-gray-500/25'
+                        } transform hover:scale-105 active:scale-95`}
+                      >
                         📝 Update
                       </button>
                     </div>
@@ -370,44 +388,6 @@ const Stakeholders = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Action Center */}
-        <div className={`mt-8 p-6 rounded-2xl border ${
-          isDark 
-            ? 'bg-gray-800/80 border-gray-700/50' 
-            : 'bg-white/80 border-white/50'
-        } backdrop-blur-xl`}>
-          <h3 className={`text-xl font-bold mb-4 ${theme.text.primary}`}>📋 Action Center</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className={`p-4 rounded-xl text-left transition-all hover:scale-105 ${
-              isDark 
-                ? 'bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800' 
-                : 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
-            } text-white shadow-lg`}>
-              <div className="text-2xl mb-2">📊</div>
-              <div className="font-semibold">Generate Report</div>
-              <div className="text-sm opacity-90">Stakeholder engagement summary</div>
-            </button>
-            <button className={`p-4 rounded-xl text-left transition-all hover:scale-105 ${
-              isDark 
-                ? 'bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800' 
-                : 'bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
-            } text-white shadow-lg`}>
-              <div className="text-2xl mb-2">📅</div>
-              <div className="font-semibold">Schedule Meetings</div>
-              <div className="text-sm opacity-90">Plan stakeholder engagements</div>
-            </button>
-            <button className={`p-4 rounded-xl text-left transition-all hover:scale-105 ${
-              isDark 
-                ? 'bg-gradient-to-br from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800' 
-                : 'bg-gradient-to-br from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
-            } text-white shadow-lg`}>
-              <div className="text-2xl mb-2">📈</div>
-              <div className="font-semibold">Analytics</div>
-              <div className="text-sm opacity-90">Engagement trends & insights</div>
-            </button>
-          </div>
         </div>
       </main>
 
@@ -495,15 +475,26 @@ const Stakeholders = () => {
 
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${theme.text.primary}`}>Icon</label>
-                  <input
-                    type="text"
+                  <select
                     value={newStakeholderData.icon}
                     onChange={(e) => setNewStakeholderData({...newStakeholderData, icon: e.target.value})}
                     className={`w-full px-4 py-2 rounded-lg border ${
                       isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
                     }`}
-                    placeholder="👤"
-                  />
+                  >
+                    <option value="💰">💰 Financial</option>
+                    <option value="👥">👥 Employees</option>
+                    <option value="🛍️">🛍️ Customers</option>
+                    <option value="🏛️">🏛️ Government</option>
+                    <option value="🏘️">🏘️ Community</option>
+                    <option value="🤝">🤝 Partners</option>
+                    <option value="👤">👤 Individual</option>
+                    <option value="🏢">🏢 Corporate</option>
+                    <option value="🌍">🌍 Global</option>
+                    <option value="📊">📊 Analysts</option>
+                    <option value="⚖️">⚖️ Regulators</option>
+                    <option value="🎯">🎯 Strategic</option>
+                  </select>
                 </div>
               </div>
 
@@ -623,6 +614,200 @@ const Stakeholders = () => {
                     isDark 
                       ? 'bg-gray-700 hover:bg-gray-600 text-white'
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  }`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-2xl ${
+            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } border p-6`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-xl font-bold ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>📞 Contact {showContactModal.name}</h3>
+              <button 
+                onClick={() => setShowContactModal(null)}
+                className={`p-2 rounded-lg ${
+                  isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <span className="text-lg">📧</span>
+                <div>
+                  <div className="font-medium text-blue-900">Email</div>
+                  <div className="text-sm text-blue-700">{showContactModal.email || 'contact@company.com'}</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 border border-purple-200">
+                <span className="text-lg">📅</span>
+                <div>
+                  <div className="font-medium text-purple-900">Next Action</div>
+                  <div className="text-sm text-purple-700">{showContactModal.nextAction}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Sending email to:', showContactModal.email || 'contact@company.com');
+                  window.open(`mailto:${showContactModal.email || 'contact@company.com'}`);
+                  setShowContactModal(null);
+                }}
+                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer transform hover:scale-105 active:scale-95"
+              >
+                📧 Send Email
+              </button>
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowContactModal(null);
+                }}
+                className={`flex-1 py-2 px-4 rounded-lg transition-colors cursor-pointer transform hover:scale-105 active:scale-95 ${
+                  isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Modal */}
+      {showUpdateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-2xl rounded-2xl shadow-2xl ${
+            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } border p-6 max-h-[90vh] overflow-y-auto`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-xl font-bold ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>📝 Update {showUpdateModal.name}</h3>
+              <button 
+                onClick={() => setShowUpdateModal(null)}
+                className={`p-2 rounded-lg ${
+                  isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Update form submitted for:', showUpdateModal.name);
+              
+              const formData = new FormData(e.target);
+              const updatedStakeholder = {
+                ...showUpdateModal,
+                engagement: formData.get('engagement'),
+                priority: formData.get('priority'),
+                satisfaction: parseInt(formData.get('satisfaction')),
+                nextAction: formData.get('nextAction'),
+                lastContact: new Date().toISOString().split('T')[0]
+              };
+              
+              console.log('Updated stakeholder data:', updatedStakeholder);
+              
+              setStakeholders(stakeholders.map(s => 
+                s.id === showUpdateModal.id ? updatedStakeholder : s
+              ));
+              
+              // Show success message
+              alert('✓ Stakeholder updated successfully!');
+              
+              setShowUpdateModal(null);
+            }} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Engagement Level</label>
+                  <select 
+                    name="engagement" 
+                    defaultValue={showUpdateModal.engagement}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Priority</label>
+                  <select 
+                    name="priority" 
+                    defaultValue={showUpdateModal.priority}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>Next Action</label>
+                <input 
+                  type="text" 
+                  name="nextAction" 
+                  defaultValue={showUpdateModal.nextAction}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="Enter next action"
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <button 
+                  type="submit"
+                  className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer transform hover:scale-105 active:scale-95"
+                >
+                  ✓ Update Stakeholder
+                </button>
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowUpdateModal(null);
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-lg transition-colors cursor-pointer transform hover:scale-105 active:scale-95 ${
+                    isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                   }`}
                 >
                   Cancel

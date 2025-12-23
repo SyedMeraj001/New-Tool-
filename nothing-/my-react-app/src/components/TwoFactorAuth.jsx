@@ -72,9 +72,14 @@ const TwoFactorAuth = ({ onVerify, onCancel, email }) => {
         <div className="text-center mb-6">
           <div className="text-5xl mb-4">🔐</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Two-Factor Authentication</h2>
-          <p className="text-gray-600 text-sm">
-            Enter the 6-digit code sent to<br />
-            <span className="font-semibold">{email}</span>
+          <p className="text-gray-600 text-sm mb-2">
+            Enter the 6-digit verification code sent to:
+          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+            <span className="font-semibold text-blue-800">{email}</span>
+          </div>
+          <p className="text-gray-500 text-xs">
+            Please check your email and enter the code below
           </p>
         </div>
 

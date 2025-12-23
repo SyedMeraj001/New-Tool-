@@ -204,6 +204,8 @@ function Reports() {
   const [frameworkFilter, setFrameworkFilter] = useState('all');
   const [sortBy, setSortBy] = useState('compliance');
   const [viewMode, setViewMode] = useState('grid');
+  const [selectedItemDetails, setSelectedItemDetails] = useState(null);
+  const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
   const [selectedFrameworks, setSelectedFrameworks] = useState([]);
   // Get current sector configuration
   const sectorReportTemplates = sectorConfig?.reportTemplates || [];
@@ -1023,8 +1025,8 @@ function Reports() {
   };
 
   const viewDetails = (item) => {
-    const details = `Details:\nCompany: ${item.companyName || 'N/A'}\nCategory: ${item.category || 'N/A'}\nMetric: ${item.metric || 'N/A'}\nValue: ${item.value || 'N/A'}\nDate: ${item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}`;
-    showToast(details, 'info');
+    setSelectedItemDetails(item);
+    setShowItemDetailsModal(true);
   };
 
   const deleteItem = (displayIndex) => {
@@ -2425,9 +2427,10 @@ function Reports() {
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               viewDetails(item);
-                              showToast('Viewing item details', 'info');
                             }}
                             className={`p-2 rounded-lg transition-colors duration-200 ${theme.hover.subtle}`}
                             title="View Details"
@@ -2999,13 +3002,91 @@ function Reports() {
           </Modal>
         )}
 
-        {/* Toast Notifications */}
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
+        {/* Item Details Modal */}
+        {showItemDetailsModal && selectedItemDetails && (
+          <Modal
+            isOpen={showItemDetailsModal}
+            onClose={() => setShowItemDetailsModal(false)}
+            title="📊 ESG Data Details"
+            size="md"
+            isDark={isDark}
+          >
+            <div className="space-y-4">
+              <div className={`p-4 rounded-lg ${theme.bg.subtle}`}>
+                <h4 className={`font-semibold ${theme.text.primary} mb-3`}>Data Entry Information</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className={`font-medium ${theme.text.secondary}`}>Company:</span>
+                    <p className={theme.text.primary}>{selectedItemDetails.companyName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className={`font-medium ${theme.text.secondary}`}>Category:</span>
+                    <p className={`capitalize ${theme.text.primary}`}>{selectedItemDetails.category || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className={`font-medium ${theme.text.secondary}`}>Metric:</span>
+                    <p className={theme.text.primary}>{selectedItemDetails.metric || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className={`font-medium ${theme.text.secondary}`}>Value:</span>
+                    <p className={`font-bold text-lg ${theme.text.primary}`}>{selectedItemDetails.value || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className={`font-medium ${theme.text.secondary}`}>Status:</span>
+                    <p className={`font-medium ${
+                      selectedItemDetails.status === 'Submitted' ? 'text-green-600' :
+                      selectedItemDetails.status === 'Pending' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>{selectedItemDetails.status || 'Pending'}</p>
+                  </div>
+                  <div>
+                    <span className={`font-medium ${theme.text.secondary}`}>Date:</span>
+                    <p className={theme.text.primary}>
+                      {selectedItemDetails.timestamp ? new Date(selectedItemDetails.timestamp).toLocaleString() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedItemDetails.sector && (
+                <div className={`p-4 rounded-lg ${theme.bg.subtle}`}>
+                  <h4 className={`font-semibold ${theme.text.primary} mb-3`}>Additional Information</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className={`font-medium ${theme.text.secondary}`}>Sector:</span>
+                      <p className={`capitalize ${theme.text.primary}`}>{selectedItemDetails.sector}</p>
+                    </div>
+                    <div>
+                      <span className={`font-medium ${theme.text.secondary}`}>Region:</span>
+                      <p className={theme.text.primary}>{selectedItemDetails.region || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className={`font-medium ${theme.text.secondary}`}>Reporting Year:</span>
+                      <p className={theme.text.primary}>{selectedItemDetails.reportingYear || selectedItemDetails.year || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="primary" 
+                  onClick={() => {
+                    const csvContent = `Company,Category,Metric,Value,Status,Date\n"${selectedItemDetails.companyName || 'N/A'}","${selectedItemDetails.category || 'N/A'}","${selectedItemDetails.metric || 'N/A'}","${selectedItemDetails.value || 'N/A'}","${selectedItemDetails.status || 'Pending'}","${selectedItemDetails.timestamp ? new Date(selectedItemDetails.timestamp).toLocaleString() : 'N/A'}"`;
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ESG-Data-${selectedItemDetails.metric || 'item'}-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    showToast('Data exported successfully', 'success');
+                  }}
+                >
+                  📥 Export CSV
+                </Button>
+                <Button variant="outline" onClick={() => setShowItemDetailsModal(false)}>Close</Button>
+              </div>
+            </div>
+          </Modal>
         )}
       </div>
 

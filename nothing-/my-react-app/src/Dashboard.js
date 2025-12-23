@@ -370,18 +370,6 @@ function Dashboard() {
                 
                 {showPrimaryActions && (
                   <div className="mt-3 space-y-2 animate-fade-in">
-                    <Link to="/data-entry" className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
-                      isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
-                    }`}>
-                      <span className="text-lg group-hover:scale-110 transition-transform duration-200">⚡</span>
-                      <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>Add New Data</span>
-                    </Link>
-                    <Link to="/analytics" className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
-                      isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
-                    }`}>
-                      <span className="text-lg group-hover:scale-110 transition-transform duration-200">📊</span>
-                      <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>View Analytics</span>
-                    </Link>
                     <div onClick={() => setShowEnhancedEntry(true)} className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
                       isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
                     }`}>
@@ -393,12 +381,6 @@ function Dashboard() {
                     }`}>
                       <span className="text-lg group-hover:scale-110 transition-transform duration-200">📁</span>
                       <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>Evidence Management</span>
-                    </Link>
-                    <Link to="/reports" className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] group ${
-                      isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80 hover:shadow-md'
-                    }`}>
-                      <span className="text-lg group-hover:scale-110 transition-transform duration-200">📋</span>
-                      <span className={`font-medium transition-colors duration-200 ${theme.text.secondary} group-hover:${theme.text.primary}`}>Generate Report</span>
                     </Link>
                   </div>
                 )}
@@ -423,10 +405,7 @@ function Dashboard() {
                 {showManagementActions && (
                   <div className="mt-3 space-y-2 animate-fade-in">
                     {[
-                      { icon: '✓', label: 'Compliance', link: '/compliance' },
-                      { icon: '👥', label: 'Stakeholders', link: '/stakeholders' },
-                      { icon: '⚖️', label: 'Regulatory', link: '/regulatory' },
-                      { icon: '📋', label: 'Workflow & Approval', link: '/workflow' },
+                      { icon: '👤', label: 'User Management', link: '/user-management' },
                       { icon: '📅', label: 'Compliance Manager', action: () => setShowComplianceManager(true) }
                     ].map((action, index) => (
                       action.link ? (

@@ -178,11 +178,11 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     { path: '/', label: 'Dashboard', icon: '📊' },
     { path: '/data-entry', label: 'Data Entry', icon: '📝' },
     { path: '/reports', label: 'Reports', icon: '📋' },
+    { path: '/workflow', label: 'Approval', icon: '📋' },
     { path: '/analytics', label: 'Analytics', icon: '📈' },
     { path: '/compliance', label: 'Compliance', icon: '✅' },
     { path: '/regulatory', label: 'Regulatory', icon: '⚖️' },
-    { path: '/stakeholders', label: 'Stakeholders', icon: '👥' },
-    { path: '/user-management', label: 'Users', icon: '👤', adminOnly: true }
+    { path: '/stakeholders', label: 'Stakeholders', icon: '👥' }
   ];
 
   return (

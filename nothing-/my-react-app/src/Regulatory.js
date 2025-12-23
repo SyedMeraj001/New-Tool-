@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from './contexts/ThemeContext';
 import { getThemeClasses } from './utils/themeUtils';
 import ProfessionalHeader from './components/ProfessionalHeader';
+import RegulatoryComplianceManager from './components/RegulatoryComplianceManager';
 import { useNavigate } from 'react-router-dom';
 
 const Regulatory = () => {
@@ -10,6 +11,8 @@ const Regulatory = () => {
   const theme = getThemeClasses(isDark);
   const [selectedRegulation, setSelectedRegulation] = useState(null);
   const [animateCards, setAnimateCards] = useState(false);
+  const [showComplianceModal, setShowComplianceModal] = useState(false);
+  const [showRegulationDetails, setShowRegulationDetails] = useState(null);
   
   const [regulations] = useState([
     { 
@@ -258,19 +261,18 @@ const Regulatory = () => {
                       </ul>
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <button className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-                        isDark 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      }`}>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowRegulationDetails(reg);
+                        }}
+                        className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          isDark 
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
+                      >
                         📋 View Details
-                      </button>
-                      <button className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-                        isDark 
-                          ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
-                          : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
-                      }`}>
-                        📊 Generate Report
                       </button>
                     </div>
                   </div>
@@ -300,11 +302,15 @@ const Regulatory = () => {
               { icon: '📋', title: 'Generate Reports', desc: 'Create regulatory compliance reports', color: 'green' },
               { icon: '⚠️', title: 'Risk Assessment', desc: 'Identify compliance risks and gaps', color: 'amber' }
             ].map((action, idx) => (
-              <button key={idx} className={`group p-6 rounded-xl border transition-all duration-200 hover:scale-105 hover:shadow-lg ${
-                isDark 
-                  ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500' 
-                  : 'bg-white/60 border-slate-200 hover:border-slate-300'
-              }`}>
+              <button 
+                key={idx} 
+                onClick={() => setShowComplianceModal(true)}
+                className={`group p-6 rounded-xl border transition-all duration-200 hover:scale-105 hover:shadow-lg ${
+                  isDark 
+                    ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500' 
+                    : 'bg-white/60 border-slate-200 hover:border-slate-300'
+                }`}
+              >
                 <div className={`text-3xl mb-3 group-hover:scale-110 transition-transform duration-200`}>{action.icon}</div>
                 <h3 className={`font-semibold mb-2 ${theme.text.primary}`}>{action.title}</h3>
                 <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{action.desc}</p>
@@ -313,6 +319,128 @@ const Regulatory = () => {
           </div>
         </div>
       </main>
+
+      {/* Regulatory Compliance Modal */}
+      {showComplianceModal && (
+        <RegulatoryComplianceManager onClose={() => setShowComplianceModal(false)} />
+      )}
+
+      {/* Regulation Details Modal */}
+      {showRegulationDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden ${
+            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } border`}>
+            <div className={`p-6 border-b ${
+              isDark ? 'border-gray-700' : 'border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{showRegulationDetails.icon}</span>
+                  <h2 className={`text-2xl font-bold ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>{showRegulationDetails.name}</h2>
+                </div>
+                <button 
+                  onClick={() => setShowRegulationDetails(null)} 
+                  className={`p-2 rounded-lg ${
+                    isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <h3 className={`font-semibold mb-2 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>Full Name</h3>
+                <p className={`text-sm ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>{showRegulationDetails.fullName}</p>
+              </div>
+              
+              <div>
+                <h3 className={`font-semibold mb-2 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>Description</h3>
+                <p className={`text-sm ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>{showRegulationDetails.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className={`font-semibold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Status</h3>
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(showRegulationDetails.status)}`}>
+                    {showRegulationDetails.status}
+                  </div>
+                </div>
+                <div>
+                  <h3 className={`font-semibold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Progress</h3>
+                  <div className="flex items-center gap-2">
+                    <div className={`flex-1 h-2 rounded-full ${
+                      isDark ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
+                      <div 
+                        className={`h-2 rounded-full bg-gradient-to-r ${getProgressColor(showRegulationDetails.progress)}`}
+                        style={{ width: `${showRegulationDetails.progress}%` }}
+                      ></div>
+                    </div>
+                    <span className={`text-sm font-bold ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>{showRegulationDetails.progress}%</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className={`font-semibold mb-2 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>Key Requirements</h3>
+                <ul className="space-y-2">
+                  {showRegulationDetails.requirements.map((req, idx) => (
+                    <li key={idx} className={`text-sm flex items-center gap-2 ${
+                      isDark ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      <span className="text-green-500">✓</span>
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className={`font-semibold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Deadline</h3>
+                  <p className={`text-sm ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>{new Date(showRegulationDetails.deadline).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <h3 className={`font-semibold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Priority</h3>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${getPriorityColor(showRegulationDetails.priority)}`}></div>
+                    <span className={`text-sm ${
+                      isDark ? 'text-gray-300' : 'text-gray-700'
+                    }`}>{showRegulationDetails.priority}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fade-in-up {

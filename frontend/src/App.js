@@ -22,7 +22,7 @@ import {
   LazyIndustryStandardDataEntry,
   LazyReports,
   LazyAnalytics,
-  LazyAdvancedAnalytics,
+
   LazyCompliance,
   LazyRegulatory,
   LazyStakeholders,
@@ -82,7 +82,7 @@ const Layout = () => {
             <Route path="/supply-chain" element={<ProtectedRoute><LazySupplyChainESG /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><LazyReports /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><LazyAnalytics /></ProtectedRoute>} />
-            <Route path="/advanced-analytics" element={<ProtectedRoute><LazyAdvancedAnalytics /></ProtectedRoute>} />
+
             <Route path="/compliance" element={<ProtectedRoute><LazyCompliance /></ProtectedRoute>} />
             <Route path="/stakeholders" element={<ProtectedRoute><LazyStakeholders /></ProtectedRoute>} />
             <Route path="/regulatory" element={<ProtectedRoute><LazyRegulatory /></ProtectedRoute>} />

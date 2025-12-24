@@ -1,627 +1,358 @@
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
-export const generateExecutiveProfessionalReport = (framework, data, options = {}) => {
+export const generateEnhancedProfessionalPDF = async (data, options = {}) => {
   const pdf = new jsPDF();
   const {
-    companyName = 'ESGenius Tech Solutions',
+    title = 'ESG Sustainability Report',
+    companyName = 'Company Name',
     reportPeriod = new Date().getFullYear(),
-    executiveSummary = true,
+    framework = 'GRI',
     includeCharts = true,
-    includeCompliance = true
+    includeAnalysis = true
   } = options;
-
-  // Professional color scheme
+  
   const colors = {
-    primary: [0, 51, 102],      // Deep blue
-    secondary: [0, 102, 51],     // Forest green  
-    accent: [204, 153, 0],       // Gold
-    text: [33, 37, 41],          // Dark gray
-    lightGray: [248, 249, 250],  // Light background
-    mediumGray: [108, 117, 125], // Medium gray
-    success: [40, 167, 69],      // Success green
-    warning: [255, 193, 7],      // Warning yellow
-    danger: [220, 53, 69]        // Danger red
+    primary: [46, 125, 50],
+    secondary: [25, 118, 210],
+    accent: [255, 152, 0],
+    text: [51, 51, 51],
+    lightGray: [248, 249, 250],
+    mediumGray: [189, 189, 189],
+    white: [255, 255, 255]
   };
-
-  let pageCount = 1;
-
-  // Executive Cover Page
-  createExecutiveCoverPage(pdf, framework, companyName, reportPeriod, colors);
   
-  // Executive Summary
-  if (executiveSummary) {
+  // Cover page
+  await createEnhancedCoverPage(pdf, title, companyName, reportPeriod, framework, colors);
+  
+  // Table of contents
+  pdf.addPage();
+  createTableOfContents(pdf, colors);
+  
+  // Executive summary
+  pdf.addPage();
+  await createEnhancedExecutiveSummary(pdf, data, colors, options);
+  
+  // Performance analysis
+  if (includeAnalysis && data && data.length > 0) {
     pdf.addPage();
-    pageCount++;
-    createExecutiveSummary(pdf, data, colors, framework);
+    await createPerformanceAnalysis(pdf, data, colors);
   }
   
-  // Key Performance Dashboard
-  pdf.addPage();
-  pageCount++;
-  createKPIDashboard(pdf, data, colors);
-  
-  // ESG Performance Analysis
-  pdf.addPage();
-  pageCount++;
-  createPerformanceAnalysis(pdf, data, colors);
-  
-  // Risk Assessment & Opportunities
-  pdf.addPage();
-  pageCount++;
-  createRiskOpportunityAnalysis(pdf, data, colors);
-  
-  // Compliance & Governance
-  if (includeCompliance) {
+  // Data appendix
+  if (data && data.length > 0) {
     pdf.addPage();
-    pageCount++;
-    createComplianceGovernance(pdf, framework, colors);
+    createDataAppendix(pdf, data, colors);
   }
-  
-  // Strategic Recommendations
-  pdf.addPage();
-  pageCount++;
-  createStrategicRecommendations(pdf, data, colors);
-  
-  // Add professional footer to all pages
-  addProfessionalFooters(pdf, pageCount, companyName);
   
   return pdf;
 };
 
-const createExecutiveCoverPage = (pdf, framework, companyName, reportPeriod, colors) => {
-  // Professional header with gradient effect
+const createEnhancedCoverPage = async (pdf, title, companyName, reportPeriod, framework, colors) => {
+  // Gradient background
   pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 80, 'F');
+  pdf.rect(0, 0, 210, 297, 'F');
+  
+  // Add subtle pattern
+  pdf.setDrawColor(255, 255, 255, 0.1);
+  for (let i = 0; i < 210; i += 20) {
+    pdf.line(i, 0, i, 297);
+  }
   
   // Company logo placeholder
-  pdf.setFillColor(255, 255, 255);
-  pdf.roundedRect(15, 15, 30, 15, 2, 2, 'F');
+  pdf.setFillColor(...colors.white);
+  pdf.circle(105, 80, 30, 'F');
   pdf.setTextColor(...colors.primary);
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('LOGO', 28, 24);
-  
-  // Company name and title
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(32);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(companyName, 15, 55);
-  
-  // Main report title
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(42);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('ESG PERFORMANCE', 15, 110);
-  pdf.text('EXECUTIVE REPORT', 15, 135);
-  
-  // Framework and period
-  pdf.setFillColor(...colors.secondary);
-  pdf.roundedRect(15, 150, 80, 25, 3, 3, 'F');
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${framework} Framework`, 20, 165);
-  
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(18);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`Reporting Period: ${reportPeriod}`, 15, 190);
-  
-  // Professional date and confidentiality
-  pdf.setFontSize(12);
-  pdf.setTextColor(...colors.mediumGray);
-  pdf.text(`Report Date: ${new Date().toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  })}`, 15, 210);
-  
-  // Executive summary box
-  pdf.setFillColor(...colors.lightGray);
-  pdf.roundedRect(15, 230, 180, 40, 5, 5, 'F');
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('EXECUTIVE BRIEFING', 20, 240);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('This report provides strategic insights into our ESG performance,', 20, 250);
-  pdf.text('risk assessment, and recommendations for sustainable growth.', 20, 260);
-  
-  // Confidentiality notice
-  pdf.setTextColor(...colors.mediumGray);
-  pdf.setFontSize(8);
-  pdf.text('CONFIDENTIAL - For Executive Review Only', 15, 285);
-};
-
-const createExecutiveSummary = (pdf, data, colors, framework) => {
-  // Professional header
-  pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 35, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('EXECUTIVE SUMMARY', 15, 25);
-  
-  // Key metrics overview
-  const envData = data.filter(item => item.category === 'environmental');
-  const socialData = data.filter(item => item.category === 'social');
-  const govData = data.filter(item => item.category === 'governance');
-  
-  // Calculate performance scores
-  const envScore = calculateCategoryScore(envData);
-  const socialScore = calculateCategoryScore(socialData);
-  const govScore = calculateCategoryScore(govData);
-  const overallScore = Math.round((envScore + socialScore + govScore) / 3);
-  
-  // Performance scorecard
-  pdf.setFillColor(...colors.lightGray);
-  pdf.roundedRect(15, 50, 180, 60, 5, 5, 'F');
-  
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('ESG PERFORMANCE SCORECARD', 20, 65);
-  
-  // Score boxes
-  const scoreBoxes = [
-    { label: 'Environmental', score: envScore, x: 25 },
-    { label: 'Social', score: socialScore, x: 75 },
-    { label: 'Governance', score: govScore, x: 125 },
-    { label: 'Overall ESG', score: overallScore, x: 175 }
-  ];
-  
-  scoreBoxes.forEach(box => {
-    const color = box.score >= 80 ? colors.success : 
-                  box.score >= 60 ? colors.warning : colors.danger;
-    
-    pdf.setFillColor(...color);
-    pdf.roundedRect(box.x - 15, 75, 30, 25, 3, 3, 'F');
-    
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(box.score.toString(), box.x - 5, 90);
-    
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(box.label, box.x - 12, 98);
-  });
-  
-  // Strategic insights
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('STRATEGIC INSIGHTS', 15, 130);
-  
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
-  const insights = [
-    `• Overall ESG performance rated at ${overallScore}/100, indicating ${getPerformanceRating(overallScore)} performance`,
-    `• ${data.length} key performance indicators tracked across all ESG dimensions`,
-    `• Environmental initiatives show ${envScore >= 70 ? 'strong' : 'developing'} progress toward sustainability goals`,
-    `• Social responsibility metrics demonstrate ${socialScore >= 70 ? 'excellent' : 'good'} stakeholder engagement`,
-    `• Governance framework maintains ${govScore >= 70 ? 'robust' : 'adequate'} oversight and transparency`
-  ];
-  
-  let yPos = 145;
-  insights.forEach(insight => {
-    pdf.text(insight, 20, yPos);
-    yPos += 12;
-  });
-  
-  // Key achievements box
-  pdf.setFillColor(...colors.secondary);
-  pdf.roundedRect(15, 200, 180, 50, 5, 5, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('KEY ACHIEVEMENTS & MILESTONES', 20, 215);
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  const achievements = [
-    '✓ Comprehensive ESG data collection and monitoring system implemented',
-    '✓ Alignment with international reporting standards and best practices',
-    '✓ Stakeholder engagement initiatives expanded across all business units'
-  ];
-  
-  yPos = 230;
-  achievements.forEach(achievement => {
-    pdf.text(achievement, 25, yPos);
-    yPos += 10;
-  });
-};
-
-const createKPIDashboard = (pdf, data, colors) => {
-  // Header
-  pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 35, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('KEY PERFORMANCE INDICATORS', 15, 25);
-  
-  // Environmental KPIs
-  createKPISection(pdf, 'ENVIRONMENTAL METRICS', data.filter(d => d.category === 'environmental'), colors, 50);
-  
-  // Social KPIs  
-  createKPISection(pdf, 'SOCIAL METRICS', data.filter(d => d.category === 'social'), colors, 120);
-  
-  // Governance KPIs
-  createKPISection(pdf, 'GOVERNANCE METRICS', data.filter(d => d.category === 'governance'), colors, 190);
-};
-
-const createKPISection = (pdf, title, sectionData, colors, yStart) => {
-  pdf.setFillColor(...colors.secondary);
-  pdf.rect(15, yStart, 180, 20, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(title, 20, yStart + 13);
+  pdf.text('LOGO', 105 - pdf.getTextWidth('LOGO')/2, 85);
   
-  // KPI boxes
-  if (sectionData.length > 0) {
-    const kpis = sectionData.slice(0, 4);
-    let xPos = 20;
-    
-    kpis.forEach(kpi => {
-      pdf.setFillColor(...colors.lightGray);
-      pdf.roundedRect(xPos, yStart + 25, 40, 35, 3, 3, 'F');
-      
-      pdf.setTextColor(...colors.text);
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(kpi.value?.toString() || '0', xPos + 5, yStart + 40);
-      
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      const metricName = (kpi.metric || kpi.subcategory || 'Metric').substring(0, 15);
-      pdf.text(metricName, xPos + 5, yStart + 50);
-      
-      xPos += 45;
-    });
-  } else {
-    pdf.setTextColor(...colors.mediumGray);
-    pdf.setFontSize(10);
-    pdf.text('No data available', 20, yStart + 40);
-  }
-};
-
-const createPerformanceAnalysis = (pdf, data, colors) => {
-  // Header
-  pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 35, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(24);
+  // Company name
+  pdf.setTextColor(...colors.white);
+  pdf.setFontSize(28);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('PERFORMANCE ANALYSIS', 15, 25);
+  pdf.text(companyName, 105 - pdf.getTextWidth(companyName)/2, 130);
   
-  // Trend analysis
-  pdf.setTextColor(...colors.text);
+  // Title
+  pdf.setFontSize(36);
+  pdf.text(title, 105 - pdf.getTextWidth(title)/2, 160);
+  
+  // Framework compliance badge
+  pdf.setFillColor(...colors.accent);
+  pdf.roundedRect(70, 180, 70, 25, 5, 5, 'F');
+  pdf.setTextColor(...colors.white);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('PERFORMANCE TRENDS & BENCHMARKING', 15, 55);
+  pdf.text(`${framework} COMPLIANT`, 105 - pdf.getTextWidth(`${framework} COMPLIANT`)/2, 197);
   
-  // Performance matrix
-  pdf.setFillColor(...colors.lightGray);
-  pdf.roundedRect(15, 65, 180, 80, 5, 5, 'F');
+  // Report details
+  pdf.setTextColor(...colors.white);
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(`Reporting Period: ${reportPeriod}`, 105 - pdf.getTextWidth(`Reporting Period: ${reportPeriod}`)/2, 220);
   
-  const categories = ['Environmental', 'Social', 'Governance'];
-  const metrics = ['Current Score', 'Industry Avg', 'Best Practice', 'Trend'];
+  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  pdf.text(`Published: ${date}`, 105 - pdf.getTextWidth(`Published: ${date}`)/2, 235);
   
-  // Table headers
-  pdf.setTextColor(...colors.text);
+  // Footer
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
-  
-  let yPos = 80;
-  pdf.text('Category', 20, yPos);
-  pdf.text('Score', 70, yPos);
-  pdf.text('Industry', 100, yPos);
-  pdf.text('Best Practice', 130, yPos);
-  pdf.text('Trend', 170, yPos);
-  
-  yPos += 15;
-  
-  // Performance data
-  pdf.setFont('helvetica', 'normal');
-  categories.forEach(category => {
-    const categoryData = data.filter(d => d.category === category.toLowerCase());
-    const score = calculateCategoryScore(categoryData);
-    
-    pdf.text(category, 20, yPos);
-    pdf.text(score.toString(), 70, yPos);
-    pdf.text('75', 100, yPos); // Mock industry average
-    pdf.text('85', 130, yPos); // Mock best practice
-    pdf.text(score >= 75 ? '↗' : '→', 170, yPos);
-    
-    yPos += 12;
-  });
-  
-  // Strategic recommendations
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('STRATEGIC RECOMMENDATIONS', 15, 170);
-  
-  const recommendations = [
-    '1. Enhance environmental monitoring systems for real-time tracking',
-    '2. Expand stakeholder engagement programs across all regions',
-    '3. Strengthen governance frameworks with additional oversight mechanisms',
-    '4. Implement advanced analytics for predictive ESG performance modeling'
-  ];
-  
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
-  yPos = 185;
-  
-  recommendations.forEach(rec => {
-    pdf.text(rec, 20, yPos);
-    yPos += 15;
-  });
+  pdf.text('Confidential - For Stakeholder Review', 105 - pdf.getTextWidth('Confidential - For Stakeholder Review')/2, 280);
 };
 
-const createRiskOpportunityAnalysis = (pdf, data, colors) => {
+const createTableOfContents = (pdf, colors) => {
   // Header
   pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 35, 'F');
+  pdf.rect(0, 0, 210, 50, 'F');
   
-  pdf.setTextColor(255, 255, 255);
+  pdf.setTextColor(...colors.white);
   pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('RISK & OPPORTUNITY ANALYSIS', 15, 25);
+  pdf.text('Table of Contents', 20, 30);
   
-  // Risk matrix
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('ESG RISK ASSESSMENT', 15, 55);
-  
-  const risks = [
-    { category: 'Climate Risk', level: 'Medium', impact: 'High', mitigation: 'Carbon reduction strategy' },
-    { category: 'Social Risk', level: 'Low', impact: 'Medium', mitigation: 'Enhanced engagement' },
-    { category: 'Governance Risk', level: 'Low', impact: 'Low', mitigation: 'Regular audits' }
+  // Contents
+  const contents = [
+    { title: 'Executive Summary', page: 3 },
+    { title: 'ESG Framework & Methodology', page: 4 },
+    { title: 'Performance Analysis', page: 5 },
+    { title: 'Environmental Performance', page: 6 },
+    { title: 'Social Performance', page: 7 },
+    { title: 'Governance Performance', page: 8 },
+    { title: 'Data Appendix', page: 9 }
   ];
   
-  // Risk table
-  pdf.setFillColor(...colors.lightGray);
-  pdf.roundedRect(15, 65, 180, 60, 5, 5, 'F');
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Risk Category', 20, 80);
-  pdf.text('Level', 80, 80);
-  pdf.text('Impact', 120, 80);
-  pdf.text('Mitigation', 160, 80);
-  
-  let yPos = 95;
-  pdf.setFont('helvetica', 'normal');
-  
-  risks.forEach(risk => {
-    pdf.text(risk.category, 20, yPos);
-    
-    // Color-coded risk level
-    const levelColor = risk.level === 'High' ? colors.danger : 
-                      risk.level === 'Medium' ? colors.warning : colors.success;
-    pdf.setTextColor(...levelColor);
-    pdf.text(risk.level, 80, yPos);
-    
-    pdf.setTextColor(...colors.text);
-    pdf.text(risk.impact, 120, yPos);
-    pdf.text(risk.mitigation.substring(0, 15), 160, yPos);
-    
-    yPos += 12;
-  });
-  
-  // Opportunities section
   pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('STRATEGIC OPPORTUNITIES', 15, 150);
-  
-  const opportunities = [
-    '• Green technology investments for competitive advantage',
-    '• Enhanced brand reputation through sustainability leadership',
-    '• Cost savings through operational efficiency improvements',
-    '• Access to sustainable finance and ESG-focused investors'
-  ];
-  
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
-  yPos = 165;
-  
-  opportunities.forEach(opp => {
-    pdf.text(opp, 20, yPos);
-    yPos += 15;
-  });
-};
-
-const createComplianceGovernance = (pdf, framework, colors) => {
-  // Header
-  pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 35, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('COMPLIANCE & GOVERNANCE', 15, 25);
-  
-  // Framework compliance
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('REGULATORY COMPLIANCE STATUS', 15, 55);
-  
-  const complianceItems = [
-    { framework: 'SEBI BRSR', status: 'Compliant', percentage: '95%' },
-    { framework: 'GRI Standards', status: 'Compliant', percentage: '90%' },
-    { framework: 'TCFD', status: 'In Progress', percentage: '75%' },
-    { framework: 'SASB', status: 'Compliant', percentage: '85%' }
-  ];
-  
-  // Compliance table
-  pdf.setFillColor(...colors.lightGray);
-  pdf.roundedRect(15, 65, 180, 80, 5, 5, 'F');
-  
   pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Framework', 20, 80);
-  pdf.text('Status', 100, 80);
-  pdf.text('Completion', 150, 80);
-  
-  let yPos = 95;
   pdf.setFont('helvetica', 'normal');
   
-  complianceItems.forEach(item => {
-    pdf.setTextColor(...colors.text);
-    pdf.text(item.framework, 20, yPos);
+  let yPos = 70;
+  contents.forEach(item => {
+    pdf.text(item.title, 30, yPos);
+    pdf.text(item.page.toString(), 180, yPos);
     
-    const statusColor = item.status === 'Compliant' ? colors.success : colors.warning;
-    pdf.setTextColor(...statusColor);
-    pdf.text(item.status, 100, yPos);
-    
-    pdf.setTextColor(...colors.text);
-    pdf.text(item.percentage, 150, yPos);
-    
-    yPos += 15;
-  });
-  
-  // Governance structure
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('GOVERNANCE STRUCTURE', 15, 170);
-  
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'normal');
-  const governance = [
-    '• Board-level ESG oversight committee established',
-    '• Regular ESG performance reviews and reporting',
-    '• Integration of ESG metrics into executive compensation',
-    '• Stakeholder engagement and feedback mechanisms'
-  ];
-  
-  yPos = 185;
-  governance.forEach(item => {
-    pdf.text(item, 20, yPos);
-    yPos += 12;
-  });
-};
-
-const createStrategicRecommendations = (pdf, data, colors) => {
-  // Header
-  pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, 210, 35, 'F');
-  
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('STRATEGIC RECOMMENDATIONS', 15, 25);
-  
-  // Priority actions
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('PRIORITY ACTIONS FOR NEXT PERIOD', 15, 55);
-  
-  const priorities = [
-    {
-      title: 'Environmental Excellence',
-      actions: [
-        'Implement carbon neutrality roadmap',
-        'Enhance renewable energy adoption',
-        'Strengthen waste reduction programs'
-      ],
-      timeline: 'Q1-Q2 2024'
-    },
-    {
-      title: 'Social Impact Enhancement', 
-      actions: [
-        'Expand diversity and inclusion initiatives',
-        'Strengthen community engagement programs',
-        'Enhance employee wellbeing measures'
-      ],
-      timeline: 'Q2-Q3 2024'
-    },
-    {
-      title: 'Governance Optimization',
-      actions: [
-        'Enhance ESG reporting transparency',
-        'Strengthen risk management frameworks',
-        'Expand stakeholder communication'
-      ],
-      timeline: 'Q3-Q4 2024'
+    // Dotted line
+    pdf.setDrawColor(...colors.mediumGray);
+    const dots = Math.floor((150 - pdf.getTextWidth(item.title)) / 3);
+    for (let i = 0; i < dots; i++) {
+      pdf.circle(30 + pdf.getTextWidth(item.title) + 5 + (i * 3), yPos - 1, 0.3, 'F');
     }
+    
+    yPos += 15;
+  });
+};
+
+const createEnhancedExecutiveSummary = async (pdf, data, colors, options) => {
+  // Header
+  pdf.setFillColor(...colors.primary);
+  pdf.rect(0, 0, 210, 50, 'F');
+  
+  pdf.setTextColor(...colors.white);
+  pdf.setFontSize(24);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Executive Summary', 20, 30);
+  
+  // Content with professional styling
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setLineHeightFactor(1.4);
+  
+  const summaryText = [
+    'ESG reporting represents a fundamental shift in how organizations communicate their',
+    'value creation to stakeholders. This comprehensive report demonstrates our commitment',
+    'to transparency, accountability, and sustainable business practices.',
+    '',
+    `Our ${options.framework || 'multi-framework'} approach ensures alignment with global standards`,
+    'while addressing the specific needs of our stakeholders and industry context.',
+    '',
+    'Key Performance Highlights:',
+    `• ${data.length} ESG metrics tracked and reported`,
+    '• Comprehensive stakeholder engagement process',
+    '• Third-party verification and assurance',
+    '• Integration with business strategy and risk management'
   ];
   
   let yPos = 70;
+  summaryText.forEach(line => {
+    if (line === '') {
+      yPos += 5;
+    } else if (line.startsWith('•')) {
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(line, 25, yPos);
+      yPos += 8;
+    } else if (line.includes('Highlights:')) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(line, 20, yPos);
+      pdf.setFont('helvetica', 'normal');
+      yPos += 10;
+    } else {
+      pdf.text(line, 20, yPos);
+      yPos += 8;
+    }
+  });
   
-  priorities.forEach(priority => {
-    // Priority box
-    pdf.setFillColor(...colors.secondary);
-    pdf.roundedRect(15, yPos, 180, 50, 5, 5, 'F');
-    
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(priority.title, 20, yPos + 15);
-    
-    pdf.setFontSize(8);
-    pdf.text(`Timeline: ${priority.timeline}`, 150, yPos + 15);
-    
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    let actionY = yPos + 25;
-    
-    priority.actions.forEach(action => {
-      pdf.text(`• ${action}`, 25, actionY);
-      actionY += 8;
-    });
-    
-    yPos += 60;
+  // Performance summary box
+  yPos += 10;
+  pdf.setFillColor(...colors.lightGray);
+  pdf.roundedRect(20, yPos, 170, 60, 5, 5, 'F');
+  pdf.setDrawColor(...colors.mediumGray);
+  pdf.setLineWidth(0.5);
+  pdf.roundedRect(20, yPos, 170, 60, 5, 5, 'S');
+  
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('ESG Performance Overview', 25, yPos + 15);
+  
+  // Performance metrics
+  const categories = ['Environmental', 'Social', 'Governance'];
+  const categoryData = categories.map(cat => {
+    const catData = data.filter(item => item.category === cat.toLowerCase());
+    return {
+      category: cat,
+      metrics: catData.length,
+      status: catData.length > 0 ? 'Reported' : 'In Progress'
+    };
+  });
+  
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  let metricY = yPos + 30;
+  categoryData.forEach(cat => {
+    pdf.text(`${cat.category}: ${cat.metrics} metrics (${cat.status})`, 25, metricY);
+    metricY += 10;
   });
 };
 
-const addProfessionalFooters = (pdf, totalPages, companyName) => {
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    
-    // Footer line
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(15, 285, 195, 285);
-    
-    // Footer text
-    pdf.setTextColor(128, 128, 128);
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`${companyName} - ESG Performance Report`, 15, 292);
-    pdf.text(`Page ${i} of ${totalPages}`, 170, 292);
-    pdf.text('Confidential', 95, 292);
-  }
-};
-
-// Helper functions
-const calculateCategoryScore = (categoryData) => {
-  if (!categoryData || categoryData.length === 0) return 0;
+const createPerformanceAnalysis = async (pdf, data, colors) => {
+  // Header
+  pdf.setFillColor(...colors.primary);
+  pdf.rect(0, 0, 210, 50, 'F');
   
-  const total = categoryData.reduce((sum, item) => {
-    const value = parseFloat(item.value) || 0;
-    return sum + Math.min(value, 100); // Cap at 100
-  }, 0);
+  pdf.setTextColor(...colors.white);
+  pdf.setFontSize(24);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Performance Analysis', 20, 30);
   
-  return Math.round(total / categoryData.length);
+  // Analysis content
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'normal');
+  
+  const analysisText = [
+    'Our ESG performance analysis reveals significant progress across all three pillars',
+    'of sustainability. The following analysis provides insights into our performance',
+    'trends, benchmarking results, and areas for continued improvement.',
+    '',
+    'Methodology:',
+    '• Data collection through automated systems and manual verification',
+    '• Third-party validation of key performance indicators',
+    '• Benchmarking against industry peers and best practices',
+    '• Integration with financial performance metrics'
+  ];
+  
+  let yPos = 70;
+  analysisText.forEach(line => {
+    if (line === '') {
+      yPos += 5;
+    } else if (line.startsWith('•')) {
+      pdf.text(line, 25, yPos);
+      yPos += 8;
+    } else if (line.includes('Methodology:')) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(line, 20, yPos);
+      pdf.setFont('helvetica', 'normal');
+      yPos += 10;
+    } else {
+      pdf.text(line, 20, yPos);
+      yPos += 8;
+    }
+  });
+  
+  // Performance summary table
+  yPos += 20;
+  const categories = ['Environmental', 'Social', 'Governance'];
+  const performanceData = categories.map(cat => {
+    const catData = data.filter(item => item.category === cat.toLowerCase());
+    return [
+      cat,
+      catData.length.toString(),
+      catData.length > 0 ? 'Complete' : 'In Progress',
+      catData.length > 5 ? 'Improving' : 'Stable'
+    ];
+  });
+  
+  pdf.autoTable({
+    head: [['Category', 'Metrics', 'Status', 'Trend']],
+    body: performanceData,
+    startY: yPos,
+    styles: {
+      fontSize: 10,
+      cellPadding: 5
+    },
+    headStyles: {
+      fillColor: colors.primary,
+      textColor: colors.white,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: colors.lightGray
+    }
+  });
 };
 
-const getPerformanceRating = (score) => {
-  if (score >= 85) return 'excellent';
-  if (score >= 70) return 'good';
-  if (score >= 55) return 'satisfactory';
-  return 'needs improvement';
+const createDataAppendix = (pdf, data, colors) => {
+  // Header
+  pdf.setFillColor(...colors.primary);
+  pdf.rect(0, 0, 210, 50, 'F');
+  
+  pdf.setTextColor(...colors.white);
+  pdf.setFontSize(24);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Data Appendix', 20, 30);
+  
+  // Data table
+  const tableData = data.map(item => [
+    item.metric || '',
+    item.value || '',
+    item.unit || '',
+    item.category || '',
+    item.framework || ''
+  ]);
+  
+  pdf.autoTable({
+    head: [['Metric', 'Value', 'Unit', 'Category', 'Framework']],
+    body: tableData,
+    startY: 60,
+    styles: {
+      fontSize: 8,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: colors.primary,
+      textColor: colors.white,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: colors.lightGray
+    },
+    columnStyles: {
+      0: { cellWidth: 50 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 30 },
+      4: { cellWidth: 25 }
+    }
+  });
 };
 
-export default generateExecutiveProfessionalReport;
+export const downloadEnhancedPDF = (pdf, filename = 'enhanced-esg-report.pdf') => {
+  pdf.save(filename);
+};
+
+export const generateExecutiveProfessionalReport = generateEnhancedProfessionalPDF;
+
+export default {
+  generateEnhancedProfessionalPDF,
+  generateExecutiveProfessionalReport,
+  downloadEnhancedPDF
+};

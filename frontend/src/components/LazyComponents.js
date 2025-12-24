@@ -4,7 +4,7 @@ import { lazy } from 'react';
 export const LazyDashboard = lazy(() => import('../Dashboard'));
 export const LazyReports = lazy(() => import('../Reports'));
 export const LazyAnalytics = lazy(() => import('../Analytics'));
-export const LazyAdvancedAnalytics = lazy(() => import('../AdvancedAnalytics'));
+
 export const LazyCompliance = lazy(() => import('../Compliance'));
 export const LazyDataEntry = lazy(() => import('../DataEntry'));
 export const LazyIndustryStandardDataEntry = lazy(() => import('../IndustryStandardDataEntry'));

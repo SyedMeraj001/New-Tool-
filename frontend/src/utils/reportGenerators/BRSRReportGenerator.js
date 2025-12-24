@@ -1,187 +1,206 @@
-// SEBI BRSR (Business Responsibility and Sustainability Reporting) Generator
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export class BRSRReportGenerator {
-  static generateReport(data, options = {}) {
-    const pdf = new jsPDF();
-    const { companyName = 'Company', reportingYear = new Date().getFullYear() } = options;
-
-    // BRSR Header
-    pdf.setFontSize(20);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('BUSINESS RESPONSIBILITY AND SUSTAINABILITY REPORT', 20, 25);
+  constructor(options = {}) {
+    this.options = {
+      companyName: 'Company Name',
+      reportPeriod: new Date().getFullYear(),
+      ...options
+    };
     
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(`Company: ${companyName}`, 20, 40);
-    pdf.text(`Financial Year: ${reportingYear}`, 20, 50);
-    pdf.text(`Report Date: ${new Date().toLocaleDateString()}`, 20, 60);
-
-    let yPos = 80;
-
-    // Section A: General Disclosures
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('SECTION A: GENERAL DISCLOSURES', 20, yPos);
-    yPos += 20;
-
-    const sectionA = this.extractSectionA(data);
-    Object.entries(sectionA).forEach(([key, value]) => {
-      if (yPos > 270) { pdf.addPage(); yPos = 30; }
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`${key}: ${value}`, 20, yPos);
-      yPos += 8;
-    });
-
-    // Section B: Management and Process Disclosures
-    yPos += 10;
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('SECTION B: MANAGEMENT AND PROCESS DISCLOSURES', 20, yPos);
-    yPos += 20;
-
-    const principleData = this.extractPrincipleData(data);
-    principleData.forEach((principle, index) => {
-      if (yPos > 260) { pdf.addPage(); yPos = 30; }
-      pdf.setFontSize(12);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`Principle ${index + 1}: ${principle.title}`, 20, yPos);
-      yPos += 10;
-      pdf.setFontSize(10);
-      pdf.text(`Performance: ${principle.performance}`, 25, yPos);
-      yPos += 15;
-    });
-
-    // Section C: Principle-wise Performance Disclosure
+    this.colors = {
+      primary: [156, 39, 176],
+      secondary: [103, 58, 183],
+      accent: [233, 30, 99],
+      text: [51, 51, 51],
+      lightGray: [248, 249, 250]
+    };
+  }
+  
+  generateReport(data) {
+    const pdf = new jsPDF();
+    
+    // Cover page
+    this.createCoverPage(pdf);
+    
+    // BRSR principles sections
     pdf.addPage();
-    yPos = 30;
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 102, 51);
-    pdf.text('SECTION C: PRINCIPLE-WISE PERFORMANCE DISCLOSURE', 20, yPos);
-    yPos += 20;
-
-    const performanceMetrics = this.extractPerformanceMetrics(data);
-    performanceMetrics.forEach(metric => {
-      if (yPos > 270) { pdf.addPage(); yPos = 30; }
-      pdf.setFontSize(10);
-      pdf.text(`${metric.indicator}: ${metric.value} ${metric.unit}`, 20, yPos);
-      yPos += 8;
-    });
-
+    this.createPrinciplesOverview(pdf);
+    
+    // Data by principles
+    if (data && data.length > 0) {
+      pdf.addPage();
+      this.createDataByPrinciples(pdf, data);
+    }
+    
     return pdf;
   }
-
-  static extractSectionA(data) {
-    return {
-      'Corporate Identity Number (CIN)': 'L72900DL2010PLC198141',
-      'Name of the Company': data.companyName || 'Company Name',
-      'Year of Incorporation': '2010',
-      'Registered Office Address': 'New Delhi, India',
-      'Corporate Website': 'www.company.com',
-      'E-mail ID': 'sustainability@company.com',
-      'Telephone': '+91-11-XXXXXXXX',
-      'Reporting Boundary': 'Standalone',
-      'Name of Assurance Provider': 'External Auditor',
-      'Type of Assurance': 'Limited Assurance'
-    };
-  }
-
-  static extractPrincipleData(data) {
-    return [
-      { title: 'Businesses should conduct and govern themselves with integrity', performance: 'Compliant' },
-      { title: 'Businesses should provide goods and services in a manner that is sustainable', performance: 'Compliant' },
-      { title: 'Businesses should respect and promote the well-being of all employees', performance: 'Compliant' },
-      { title: 'Businesses should respect the interests of and be responsive to all its stakeholders', performance: 'Compliant' },
-      { title: 'Businesses should respect and promote human rights', performance: 'Compliant' },
-      { title: 'Businesses should respect and make efforts to protect and restore the environment', performance: 'Compliant' },
-      { title: 'Businesses should support inclusive growth and equitable development', performance: 'Compliant' },
-      { title: 'Businesses should promote innovation and technology for sustainable development', performance: 'Compliant' },
-      { title: 'Businesses should engage with and provide value to their consumers responsibly', performance: 'Compliant' }
-    ];
-  }
-
-  static extractPerformanceMetrics(data) {
-    const metrics = [];
+  
+  createCoverPage(pdf) {
+    // Header
+    pdf.setFillColor(...this.colors.primary);
+    pdf.rect(0, 0, 210, 297, 'F');
     
-    // Environmental metrics
-    if (data.environmental) {
-      Object.entries(data.environmental).forEach(([key, value]) => {
-        if (value && !isNaN(parseFloat(value))) {
-          metrics.push({
-            indicator: this.getBRSRIndicator(key),
-            value: parseFloat(value).toFixed(2),
-            unit: this.getBRSRUnit(key)
-          });
-        }
-      });
-    }
-
-    // Social metrics
-    if (data.social) {
-      Object.entries(data.social).forEach(([key, value]) => {
-        if (value && !isNaN(parseFloat(value))) {
-          metrics.push({
-            indicator: this.getBRSRIndicator(key),
-            value: parseFloat(value).toFixed(2),
-            unit: this.getBRSRUnit(key)
-          });
-        }
-      });
-    }
-
-    // Governance metrics
-    if (data.governance) {
-      Object.entries(data.governance).forEach(([key, value]) => {
-        if (value && !isNaN(parseFloat(value))) {
-          metrics.push({
-            indicator: this.getBRSRIndicator(key),
-            value: parseFloat(value).toFixed(2),
-            unit: this.getBRSRUnit(key)
-          });
-        }
-      });
-    }
-
-    return metrics;
+    // Title
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(28);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('BRSR Report', 105 - pdf.getTextWidth('BRSR Report')/2, 80);
+    
+    pdf.setFontSize(18);
+    pdf.text('Business Responsibility and', 105 - pdf.getTextWidth('Business Responsibility and')/2, 100);
+    pdf.text('Sustainability Reporting', 105 - pdf.getTextWidth('Sustainability Reporting')/2, 120);
+    
+    // Company info
+    pdf.setFontSize(20);
+    pdf.text(this.options.companyName, 105 - pdf.getTextWidth(this.options.companyName)/2, 160);
+    
+    pdf.setFontSize(14);
+    pdf.text(`Reporting Period: ${this.options.reportPeriod}`, 105 - pdf.getTextWidth(`Reporting Period: ${this.options.reportPeriod}`)/2, 180);
+    
+    const date = new Date().toLocaleDateString();
+    pdf.text(`Generated: ${date}`, 105 - pdf.getTextWidth(`Generated: ${date}`)/2, 200);
   }
-
-  static getBRSRIndicator(key) {
-    const indicators = {
-      scope1_emissions: 'Total Scope 1 emissions',
-      scope2_emissions: 'Total Scope 2 emissions',
-      scope3_emissions: 'Total Scope 3 emissions',
-      energy_consumption: 'Total energy consumption',
-      renewable_energy: 'Renewable energy consumption',
-      water_withdrawal: 'Water withdrawal',
-      waste_generated: 'Waste generated',
-      total_employees: 'Total number of employees',
-      female_employees: 'Female employees',
-      training_hours: 'Training hours per employee',
-      board_size: 'Board size',
-      independent_directors: 'Independent directors'
-    };
-    return indicators[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  
+  createPrinciplesOverview(pdf) {
+    // Header
+    pdf.setFillColor(...this.colors.primary);
+    pdf.rect(0, 0, 210, 50, 'F');
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('BRSR Principles Overview', 20, 30);
+    
+    // Principles list
+    const principles = [
+      'Principle 1: Ethics, Transparency and Accountability',
+      'Principle 2: Product Lifecycle Sustainability',
+      'Principle 3: Employees Well-being',
+      'Principle 4: Stakeholder Engagement',
+      'Principle 5: Human Rights',
+      'Principle 6: Environment',
+      'Principle 7: Policy Advocacy',
+      'Principle 8: Inclusive Growth',
+      'Principle 9: Customer Value'
+    ];
+    
+    pdf.setTextColor(...this.colors.text);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'normal');
+    
+    let yPos = 70;
+    principles.forEach((principle, index) => {
+      pdf.setFillColor(...this.colors.lightGray);
+      pdf.roundedRect(20, yPos - 5, 170, 15, 3, 3, 'F');
+      
+      pdf.setTextColor(...this.colors.primary);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${index + 1}.`, 25, yPos + 3);
+      
+      pdf.setTextColor(...this.colors.text);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(principle.substring(principle.indexOf(':') + 2), 35, yPos + 3);
+      
+      yPos += 20;
+    });
   }
-
-  static getBRSRUnit(key) {
-    const units = {
-      scope1_emissions: 'tCO2e',
-      scope2_emissions: 'tCO2e',
-      scope3_emissions: 'tCO2e',
-      energy_consumption: 'MWh',
-      renewable_energy: '%',
-      water_withdrawal: 'm³',
-      waste_generated: 'tonnes',
-      total_employees: 'count',
-      female_employees: '%',
-      training_hours: 'hours',
-      board_size: 'count',
-      independent_directors: '%'
+  
+  createDataByPrinciples(pdf, data) {
+    // Header
+    pdf.setFillColor(...this.colors.primary);
+    pdf.rect(0, 0, 210, 50, 'F');
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('BRSR Performance Data', 20, 30);
+    
+    // Group data by BRSR principles
+    const principleData = this.groupDataByPrinciples(data);
+    
+    // Create table for each principle with data
+    let yPos = 60;
+    Object.entries(principleData).forEach(([principle, metrics]) => {
+      if (metrics.length > 0) {
+        // Check if we need a new page
+        if (yPos > 250) {
+          pdf.addPage();
+          yPos = 20;
+        }
+        
+        pdf.setTextColor(...this.colors.text);
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(principle, 20, yPos);
+        yPos += 10;
+        
+        const tableData = metrics.map(metric => [
+          metric.metric || '',
+          metric.value || '',
+          metric.unit || '',
+          metric.description || ''
+        ]);
+        
+        pdf.autoTable({
+          head: [['Metric', 'Value', 'Unit', 'Description']],
+          body: tableData,
+          startY: yPos,
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: this.colors.primary }
+        });
+        
+        yPos = pdf.lastAutoTable.finalY + 15;
+      }
+    });
+  }
+  
+  groupDataByPrinciples(data) {
+    const principles = {
+      'Principle 1: Ethics, Transparency and Accountability': [],
+      'Principle 2: Product Lifecycle Sustainability': [],
+      'Principle 3: Employees Well-being': [],
+      'Principle 4: Stakeholder Engagement': [],
+      'Principle 5: Human Rights': [],
+      'Principle 6: Environment': [],
+      'Principle 7: Policy Advocacy': [],
+      'Principle 8: Inclusive Growth': [],
+      'Principle 9: Customer Value': []
     };
-    return units[key] || '';
+    
+    data.forEach(item => {
+      const principle = item.brsrPrinciple || this.mapCategoryToPrinciple(item.category);
+      if (principles[principle]) {
+        principles[principle].push(item);
+      } else {
+        // Default to Principle 1 if no mapping found
+        principles['Principle 1: Ethics, Transparency and Accountability'].push(item);
+      }
+    });
+    
+    return principles;
+  }
+  
+  mapCategoryToPrinciple(category) {
+    const mapping = {
+      environmental: 'Principle 6: Environment',
+      social: 'Principle 3: Employees Well-being',
+      governance: 'Principle 1: Ethics, Transparency and Accountability',
+      economic: 'Principle 8: Inclusive Growth'
+    };
+    
+    return mapping[category] || 'Principle 1: Ethics, Transparency and Accountability';
+  }
+  
+  download(pdf, filename = 'brsr-report.pdf') {
+    pdf.save(filename);
   }
 }
+
+export const generateBRSRReport = (data, options = {}) => {
+  const generator = new BRSRReportGenerator(options);
+  return generator.generateReport(data);
+};
 
 export default BRSRReportGenerator;

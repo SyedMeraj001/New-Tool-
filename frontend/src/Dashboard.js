@@ -14,7 +14,7 @@ import EnhancedDataEntry from "./modules/EnhancedDataEntry";
 import ComplianceManager from "./components/ComplianceManager";
 import AdvancedBenchmarking from "./components/AdvancedBenchmarking";
 import AuditTrailViewer from "./components/AuditTrailViewer";
-import UserManagement from "./UserManagement";
+import UserManagement from "./components/UserManagement";
 
 
 // Data normalization functions from Reports.js

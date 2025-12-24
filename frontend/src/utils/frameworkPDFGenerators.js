@@ -1,236 +1,262 @@
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
-// GRI Standards specific PDF generator
+// GRI PDF Generator
 export const generateGRIPDF = (data, options = {}) => {
   const pdf = new jsPDF();
-  const { companyName = 'Company', reportPeriod = new Date().getFullYear() } = options;
+  const { companyName = 'Company Name', reportPeriod = new Date().getFullYear() } = options;
   
   // GRI Header
   pdf.setFontSize(20);
-  pdf.setTextColor(0, 102, 51);
-  pdf.text('GRI STANDARDS REPORT', 20, 25);
-  
+  pdf.text('GRI Standards Report', 20, 30);
   pdf.setFontSize(12);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(`Company: ${companyName}`, 20, 40);
-  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 50);
-  pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 60);
+  pdf.text(companyName, 20, 45);
+  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 55);
   
-  // GRI-specific sections
-  let yPos = 80;
-  
-  // GRI 102: General Disclosures
-  pdf.setFontSize(14);
-  pdf.setTextColor(0, 102, 51);
-  pdf.text('GRI 102: GENERAL DISCLOSURES', 20, yPos);
-  yPos += 20;
-  
-  pdf.setFontSize(10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('102-1 Name of the organization: ' + companyName, 20, yPos);
-  yPos += 10;
-  pdf.text('102-2 Activities, brands, products, and services', 20, yPos);
-  yPos += 10;
-  pdf.text('102-3 Location of headquarters', 20, yPos);
-  yPos += 20;
-  
-  // GRI 300: Environmental
-  pdf.setFontSize(14);
-  pdf.setTextColor(0, 102, 51);
-  pdf.text('GRI 300: ENVIRONMENTAL', 20, yPos);
-  yPos += 15;
-  
-  const envData = data.filter(d => d.category === 'environmental');
-  envData.forEach(item => {
-    if (yPos > 270) { pdf.addPage(); yPos = 30; }
-    pdf.setFontSize(10);
-    pdf.text(`• ${item.metric}: ${item.value}`, 25, yPos);
-    yPos += 8;
-  });
+  // GRI Standards table
+  const griData = data.filter(item => item.framework === 'GRI' || !item.framework);
+  if (griData.length > 0) {
+    const tableData = griData.map(item => [
+      item.griStandard || 'GRI Universal',
+      item.metric || '',
+      item.value || '',
+      item.unit || ''
+    ]);
+    
+    pdf.autoTable({
+      head: [['GRI Standard', 'Metric', 'Value', 'Unit']],
+      body: tableData,
+      startY: 70,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [46, 125, 50] }
+    });
+  }
   
   return pdf;
 };
 
-// SASB specific PDF generator
+// SASB PDF Generator
 export const generateSASBPDF = (data, options = {}) => {
   const pdf = new jsPDF();
-  const { companyName = 'Company', reportPeriod = new Date().getFullYear() } = options;
+  const { companyName = 'Company Name', reportPeriod = new Date().getFullYear() } = options;
   
   // SASB Header
   pdf.setFontSize(20);
-  pdf.setTextColor(0, 51, 102);
-  pdf.text('SASB STANDARDS REPORT', 20, 25);
-  
+  pdf.text('SASB Standards Report', 20, 30);
   pdf.setFontSize(12);
-  pdf.text(`Company: ${companyName}`, 20, 40);
-  pdf.text(`Industry: Technology & Communications`, 20, 50);
-  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 60);
+  pdf.text(companyName, 20, 45);
+  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 55);
   
-  let yPos = 80;
-  
-  // SASB Materiality Map
-  pdf.setFontSize(14);
-  pdf.setTextColor(0, 51, 102);
-  pdf.text('MATERIALITY MAP', 20, yPos);
-  yPos += 20;
-  
-  // Industry-specific metrics
-  pdf.setFontSize(12);
-  pdf.text('Key Performance Indicators:', 20, yPos);
-  yPos += 15;
-  
-  data.forEach(item => {
-    if (yPos > 270) { pdf.addPage(); yPos = 30; }
-    pdf.setFontSize(10);
-    pdf.text(`${item.metric}: ${item.value} (${item.category})`, 25, yPos);
-    yPos += 8;
-  });
+  // SASB table
+  const sasbData = data.filter(item => item.framework === 'SASB' || !item.framework);
+  if (sasbData.length > 0) {
+    const tableData = sasbData.map(item => [
+      item.sasbTopic || 'General',
+      item.metric || '',
+      item.value || '',
+      item.unit || ''
+    ]);
+    
+    pdf.autoTable({
+      head: [['SASB Topic', 'Metric', 'Value', 'Unit']],
+      body: tableData,
+      startY: 70,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [25, 118, 210] }
+    });
+  }
   
   return pdf;
 };
 
-// TCFD specific PDF generator
+// TCFD PDF Generator
 export const generateTCFDPDF = (data, options = {}) => {
   const pdf = new jsPDF();
-  const { companyName = 'Company', reportPeriod = new Date().getFullYear() } = options;
+  const { companyName = 'Company Name', reportPeriod = new Date().getFullYear() } = options;
   
   // TCFD Header
   pdf.setFontSize(20);
-  pdf.setTextColor(102, 0, 51);
-  pdf.text('TCFD CLIMATE REPORT', 20, 25);
-  
+  pdf.text('TCFD Recommendations Report', 20, 30);
   pdf.setFontSize(12);
-  pdf.text(`Company: ${companyName}`, 20, 40);
-  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 50);
+  pdf.text(companyName, 20, 45);
+  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 55);
   
+  // TCFD pillars
+  const tcfdPillars = ['Governance', 'Strategy', 'Risk Management', 'Metrics and Targets'];
   let yPos = 70;
   
-  // TCFD Four Pillars
-  const pillars = [
-    'GOVERNANCE',
-    'STRATEGY', 
-    'RISK MANAGEMENT',
-    'METRICS AND TARGETS'
-  ];
-  
-  pillars.forEach(pillar => {
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
+  tcfdPillars.forEach(pillar => {
+    const pillarData = data.filter(item => item.tcfdPillar === pillar);
     
-    pdf.setFontSize(14);
-    pdf.setTextColor(102, 0, 51);
-    pdf.text(pillar, 20, yPos);
-    yPos += 15;
-    
-    const pillarData = data.filter(d => 
-      d.metric.toLowerCase().includes(pillar.toLowerCase().split(' ')[0])
-    );
-    
-    if (pillarData.length === 0) {
-      pdf.setFontSize(10);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text('No data available for this pillar', 25, yPos);
+    if (pillarData.length > 0) {
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(pillar, 20, yPos);
       yPos += 10;
-    } else {
-      pillarData.forEach(item => {
-        pdf.setFontSize(10);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(`• ${item.metric}: ${item.value}`, 25, yPos);
-        yPos += 8;
+      
+      const tableData = pillarData.map(item => [
+        item.metric || '',
+        item.value || '',
+        item.unit || ''
+      ]);
+      
+      pdf.autoTable({
+        head: [['Metric', 'Value', 'Unit']],
+        body: tableData,
+        startY: yPos,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [255, 152, 0] }
       });
+      
+      yPos = pdf.lastAutoTable.finalY + 15;
     }
-    yPos += 10;
   });
   
   return pdf;
 };
 
-// SEBI BRSR specific PDF generator
+// BRSR PDF Generator
 export const generateBRSRPDF = (data, options = {}) => {
   const pdf = new jsPDF();
-  const { companyName = 'Company', reportPeriod = new Date().getFullYear() } = options;
+  const { companyName = 'Company Name', reportPeriod = new Date().getFullYear() } = options;
   
   // BRSR Header
   pdf.setFontSize(20);
-  pdf.setTextColor(255, 102, 0);
-  pdf.text('SEBI BRSR REPORT', 20, 25);
-  
+  pdf.text('BRSR Report', 20, 30);
   pdf.setFontSize(12);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(`Company: ${companyName}`, 20, 40);
-  pdf.text(`Financial Year: ${reportPeriod}`, 20, 50);
-  pdf.text(`CIN: [Company Identification Number]`, 20, 60);
+  pdf.text(companyName, 20, 45);
+  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 55);
   
-  let yPos = 80;
-  
-  // BRSR Sections A, B, C
-  const sections = [
-    { name: 'SECTION A: GENERAL DISCLOSURES', data: data },
-    { name: 'SECTION B: MANAGEMENT AND PROCESS DISCLOSURES', data: data.filter(d => d.category === 'governance') },
-    { name: 'SECTION C: PRINCIPLE-WISE PERFORMANCE DISCLOSURE', data: data }
-  ];
-  
-  sections.forEach(section => {
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
+  // BRSR Principles
+  const brsrData = data.filter(item => item.framework === 'BRSR' || !item.framework);
+  if (brsrData.length > 0) {
+    const tableData = brsrData.map(item => [
+      item.brsrPrinciple || 'General',
+      item.metric || '',
+      item.value || '',
+      item.unit || ''
+    ]);
     
-    pdf.setFontSize(14);
-    pdf.setTextColor(255, 102, 0);
-    pdf.text(section.name, 20, yPos);
-    yPos += 15;
-    
-    section.data.slice(0, 5).forEach(item => {
-      if (yPos > 270) { pdf.addPage(); yPos = 30; }
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`${item.metric}: ${item.value}`, 25, yPos);
-      yPos += 8;
+    pdf.autoTable({
+      head: [['BRSR Principle', 'Metric', 'Value', 'Unit']],
+      body: tableData,
+      startY: 70,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [156, 39, 176] }
     });
-    yPos += 10;
+  }
+  
+  return pdf;
+};
+
+// Multi-framework PDF Generator
+export const generateMultiFrameworkPDF = (data, options = {}) => {
+  const pdf = new jsPDF();
+  const { companyName = 'Company Name', reportPeriod = new Date().getFullYear() } = options;
+  
+  // Header
+  pdf.setFontSize(20);
+  pdf.text('Multi-Framework ESG Report', 20, 30);
+  pdf.setFontSize(12);
+  pdf.text(companyName, 20, 45);
+  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 55);
+  
+  // Framework sections
+  const frameworks = ['GRI', 'SASB', 'TCFD', 'BRSR'];
+  let yPos = 70;
+  
+  frameworks.forEach(framework => {
+    const frameworkData = data.filter(item => item.framework === framework);
+    
+    if (frameworkData.length > 0) {
+      // Check if we need a new page
+      if (yPos > 250) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${framework} Standards`, 20, yPos);
+      yPos += 10;
+      
+      const tableData = frameworkData.map(item => [
+        item.metric || '',
+        item.value || '',
+        item.unit || '',
+        item.category || ''
+      ]);
+      
+      pdf.autoTable({
+        head: [['Metric', 'Value', 'Unit', 'Category']],
+        body: tableData,
+        startY: yPos,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: getFrameworkColor(framework) }
+      });
+      
+      yPos = pdf.lastAutoTable.finalY + 15;
+    }
   });
   
   return pdf;
 };
 
-// EU Taxonomy specific PDF generator
+const getFrameworkColor = (framework) => {
+  const colors = {
+    GRI: [46, 125, 50],
+    SASB: [25, 118, 210],
+    TCFD: [255, 152, 0],
+    BRSR: [156, 39, 176]
+  };
+  return colors[framework] || [128, 128, 128];
+};
+
+// EU Taxonomy PDF Generator
 export const generateEUTaxonomyPDF = (data, options = {}) => {
   const pdf = new jsPDF();
-  const { companyName = 'Company', reportPeriod = new Date().getFullYear() } = options;
+  const { companyName = 'Company Name', reportPeriod = new Date().getFullYear() } = options;
   
   // EU Taxonomy Header
   pdf.setFontSize(20);
-  pdf.setTextColor(0, 51, 153);
-  pdf.text('EU TAXONOMY REPORT', 20, 25);
-  
+  pdf.text('EU Taxonomy Report', 20, 30);
   pdf.setFontSize(12);
-  pdf.text(`Company: ${companyName}`, 20, 40);
-  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 50);
+  pdf.text(companyName, 20, 45);
+  pdf.text(`Reporting Period: ${reportPeriod}`, 20, 55);
   
-  let yPos = 70;
-  
-  // EU Taxonomy Objectives
-  const objectives = [
-    'Climate Change Mitigation',
-    'Climate Change Adaptation', 
-    'Sustainable Use of Water',
-    'Circular Economy',
-    'Pollution Prevention',
-    'Biodiversity Protection'
-  ];
-  
-  objectives.forEach(objective => {
-    if (yPos > 250) { pdf.addPage(); yPos = 30; }
+  // EU Taxonomy table
+  const taxonomyData = data.filter(item => item.framework === 'EU_TAXONOMY' || !item.framework);
+  if (taxonomyData.length > 0) {
+    const tableData = taxonomyData.map(item => [
+      item.taxonomyActivity || 'General',
+      item.metric || '',
+      item.value || '',
+      item.unit || ''
+    ]);
     
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 51, 153);
-    pdf.text(objective, 20, yPos);
-    yPos += 10;
-    
-    pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('• Eligible Activities: 0%', 25, yPos);
-    yPos += 8;
-    pdf.text('• Aligned Activities: 0%', 25, yPos);
-    yPos += 15;
-  });
+    pdf.autoTable({
+      head: [['Taxonomy Activity', 'Metric', 'Value', 'Unit']],
+      body: tableData,
+      startY: 70,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+  }
   
   return pdf;
+};
+
+export const downloadFrameworkPDF = (pdf, framework, filename) => {
+  const defaultFilename = `${framework.toLowerCase()}-report-${new Date().getFullYear()}.pdf`;
+  pdf.save(filename || defaultFilename);
+};
+
+export default {
+  generateGRIPDF,
+  generateSASBPDF,
+  generateTCFDPDF,
+  generateBRSRPDF,
+  generateMultiFrameworkPDF,
+  generateEUTaxonomyPDF,
+  downloadFrameworkPDF
 };

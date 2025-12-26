@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import companyLogo from '../companyLogo.jpg';
 import { getUserRole, USER_ROLES } from '../utils/rbac';
-import ApprovalsPanel from './ApprovalsPanel';
+import SuperAdminNotifications from './SuperAdminNotifications';
 import TwoFactorSetup from './TwoFactorSetup';
 import EncryptionSetup from './EncryptionSetup';
 import SecureStorage from '../utils/secureStorage';
@@ -18,6 +18,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
   const [backgroundTheme, setBackgroundTheme] = useState(localStorage.getItem('backgroundTheme') || null);
   const [showApprovals, setShowApprovals] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [showSuperAdminPanel, setShowSuperAdminPanel] = useState(false);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [showEncryptionSetup, setShowEncryptionSetup] = useState(false);
@@ -174,10 +175,46 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     if (userRole === USER_ROLES.SUPERVISOR || userRole === USER_ROLES.SUPER_ADMIN) {
       const workflows = JSON.parse(localStorage.getItem('approvalWorkflows') || '[]');
       const pending = workflows.filter(w => w.status === 'pending').length;
-      setPendingCount(pending);
+      
+      // Also count signup requests for super admin
+      let signupRequestsCount = 0;
+      if (userRole === USER_ROLES.SUPER_ADMIN) {
+        const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+        signupRequestsCount = signupRequests.filter(r => r.status === 'pending').length;
+      }
+      
+      setPendingCount(pending + signupRequestsCount);
     } else {
       setPendingCount(0);
     }
+  };
+
+  const handleSignupApprove = (requestId) => {
+    const requests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+    const request = requests.find(r => r.id === requestId);
+    
+    if (request) {
+      const approvedUsers = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
+      approvedUsers.push({
+        ...request,
+        status: 'approved',
+        approvedDate: new Date().toISOString()
+      });
+      localStorage.setItem('approvedUsers', JSON.stringify(approvedUsers));
+      
+      const updatedRequests = requests.filter(r => r.id !== requestId);
+      localStorage.setItem('signupRequests', JSON.stringify(updatedRequests));
+      
+      loadPendingApprovals();
+    }
+  };
+
+  const handleSignupReject = (requestId) => {
+    const reason = prompt('Reason for rejection (optional):');
+    const requests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+    const updatedRequests = requests.filter(r => r.id !== requestId);
+    localStorage.setItem('signupRequests', JSON.stringify(updatedRequests));
+    loadPendingApprovals();
   };
 
   const unreadAlertsCount = recentAlerts.filter(alert => !alert.read).length;
@@ -373,6 +410,74 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                     </div>
                     
                     <div className="max-h-64 overflow-y-auto">
+                      {/* Signup Requests for Super Admin */}
+                      {userRole === USER_ROLES.SUPER_ADMIN && (() => {
+                        const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+                        return signupRequests.filter(r => r.status === 'pending').map((request) => (
+                          <div key={request.id} className={`p-3 border-b ${
+                            isDark ? 'border-gray-700' : 'border-gray-100'
+                          }`}>
+                            <div className="flex items-start gap-2">
+                              <span className="text-sm text-blue-500">👤</span>
+                              <div className="flex-1">
+                                <h4 className={`font-medium text-xs ${
+                                  isDark ? 'text-white' : 'text-gray-900'
+                                }`}>
+                                  New Signup Request
+                                </h4>
+                                <p className={`text-xs mt-1 ${
+                                  isDark ? 'text-gray-400' : 'text-gray-600'
+                                }`}>
+                                  {request.fullName} ({request.email}) - {request.role.replace('_', ' ')}
+                                </p>
+                                <div className="flex gap-2 mt-2">
+                                  <button
+                                    onClick={() => handleSignupApprove(request.id)}
+                                    className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded font-medium transition-colors"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleSignupReject(request.id)}
+                                    className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded font-medium transition-colors"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                      
+                      {/* Super Admin Panel Button */}
+                      {userRole === USER_ROLES.SUPER_ADMIN && (
+                        <div className={`p-3 border-b cursor-pointer transition-colors ${
+                          isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          setShowNotifications(false);
+                          setShowSuperAdminPanel(true);
+                        }}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">👑</span>
+                            <div className="flex-1">
+                              <h4 className={`font-medium text-sm ${
+                                isDark ? 'text-white' : 'text-gray-900'
+                              }`}>
+                                Super Admin Panel
+                              </h4>
+                              <p className={`text-xs mt-1 ${
+                                isDark ? 'text-gray-400' : 'text-gray-600'
+                              }`}>
+                                Manage signup requests and notifications
+                              </p>
+                            </div>
+                            <span className="text-xs text-blue-500 font-medium">View</span>
+                          </div>
+                        </div>
+                      )}
+                      
                       {recentAlerts.length === 0 ? (
                         <div className={`p-4 text-center ${
                           isDark ? 'text-gray-400' : 'text-gray-500'
@@ -734,6 +839,13 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
             onCancel={() => setShowEncryptionSetup(false)}
           />
         </div>
+      )}
+
+      {showSuperAdminPanel && (
+        <SuperAdminNotifications
+          userRole={userRole}
+          onClose={() => setShowSuperAdminPanel(false)}
+        />
       )}
     </header>
   );

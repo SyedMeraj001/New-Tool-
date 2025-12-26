@@ -287,11 +287,9 @@ function Dashboard() {
   return (
     <div className={`min-h-screen transition-all duration-500 ${
       isDark 
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
-        : 'bg-gradient-to-br from-blue-50 via-indigo-50/40 to-purple-50/30'
-    }`} style={{
-      backgroundImage: isDark ? '' : 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.12) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%)'
-    }}>
+        ? 'bg-gray-900' 
+        : 'bg-gray-50'
+    }`}>
       <ProfessionalHeader 
         onLogout={handleLogout}
         currentUser={currentUser}
@@ -309,6 +307,7 @@ function Dashboard() {
             trend={kpis.overallScore > 0 ? "↑ Active" : "→ No Data"}
             trendColor={kpis.overallScore > 0 ? "success" : "neutral"}
             progress={kpis.overallScore}
+            isDark={isDark}
           />
           <MetricCard 
             icon="✓" 
@@ -317,6 +316,7 @@ function Dashboard() {
             trend={kpis.totalEntries > 0 ? "↑ Updated" : "→ No Data"}
             trendColor={kpis.totalEntries > 0 ? "info" : "neutral"}
             progress={kpis.complianceRate}
+            isDark={isDark}
           />
           <MetricCard 
             icon="🌍" 
@@ -325,6 +325,7 @@ function Dashboard() {
             trend={kpis.environmental > 0 ? "↑ Active" : "→ No Data"}
             trendColor={kpis.environmental > 0 ? "success" : "neutral"}
             progress={kpis.environmental}
+            isDark={isDark}
           />
           <MetricCard 
             icon="📈" 
@@ -333,6 +334,7 @@ function Dashboard() {
             trend={kpis.totalEntries > 0 ? "↑ Growing" : "→ Start Adding"}
             trendColor={kpis.totalEntries > 0 ? "success" : "neutral"}
             progress={Math.min((kpis.totalEntries / 50) * 100, 100)}
+            isDark={isDark}
           />
         </div>
 
@@ -341,13 +343,11 @@ function Dashboard() {
         {/* Enhanced Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Enhanced Quick Actions */}
-          <div className={`rounded-2xl p-6 border transition-all duration-300 hover:scale-[1.02] ${
+          <div className={`rounded-lg p-6 border transition-all duration-300 hover:scale-[1.02] ${
             isDark 
-              ? 'bg-gray-800/90 border-gray-700 shadow-xl hover:shadow-2xl backdrop-blur-sm' 
-              : 'bg-white/70 backdrop-blur-2xl border-white/30 shadow-lg shadow-slate-200/30 hover:shadow-xl hover:shadow-slate-300/40'
-          }`} style={{
-            boxShadow: isDark ? '' : '0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3)'
-          }}>
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200 shadow-sm'
+          }`}>
             <div className="flex items-center gap-2 mb-6">
               <span className="text-2xl">🎯</span>
               <h2 className={`text-lg font-semibold transition-colors duration-300 ${theme.text.primary}`}>Action Center</h2>
@@ -555,13 +555,11 @@ function Dashboard() {
           </div>
 
           {/* Enhanced Performance Cards */}
-          <div className={`lg:col-span-2 rounded-2xl p-6 border transition-all duration-300 ${
+          <div className={`lg:col-span-2 rounded-lg p-6 border transition-all duration-300 ${
             isDark 
-              ? 'bg-gray-800/90 border-gray-700 shadow-xl backdrop-blur-sm' 
-              : 'bg-white/70 backdrop-blur-2xl border-white/30 shadow-lg shadow-slate-200/30'
-          }`} style={{
-            boxShadow: isDark ? '' : '0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3)'
-          }}>
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200 shadow-sm'
+          }`}>
             <div className="flex items-center gap-2 mb-6">
               <span className="text-blue-500">📊</span>
               <h2 className={`text-lg font-semibold transition-colors duration-300 ${theme.text.primary}`}>ESG Performance Overview</h2>
@@ -580,12 +578,13 @@ function Dashboard() {
                   score={Math.round(metric.score) || 0}
                   target={metric.target}
                   status={metric.score >= 70 ? "excellent" : metric.score >= 50 ? "good" : metric.score > 0 ? "warning" : "neutral"}
+                  isDark={isDark}
                 />
               ))}
-              <div className={`p-4 rounded-xl border transition-all duration-300 ${
+              <div className={`p-4 rounded-lg border transition-all duration-300 ${
                 isDark 
-                  ? 'bg-gray-800/90 border-gray-700' 
-                  : 'bg-white/70 border-white/30'
+                  ? 'bg-gray-700 border-gray-600' 
+                  : 'bg-white border-gray-200'
               }`}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">🔗</span>

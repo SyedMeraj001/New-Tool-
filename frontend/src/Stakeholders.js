@@ -129,24 +129,29 @@ const Stakeholders = () => {
   };
 
   const getPriorityColor = (priority) => {
-    switch(priority) {
-      case 'Critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'High': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    if (isDark) {
+      switch(priority) {
+        case 'Critical': return 'bg-red-900/50 text-red-300 border-red-700/50';
+        case 'High': return 'bg-orange-900/50 text-orange-300 border-orange-700/50';
+        case 'Medium': return 'bg-yellow-900/50 text-yellow-300 border-yellow-700/50';
+        default: return 'bg-gray-700/50 text-gray-300 border-gray-600/50';
+      }
+    } else {
+      switch(priority) {
+        case 'Critical': return 'bg-red-100 text-red-800 border-red-200';
+        case 'High': return 'bg-orange-100 text-orange-800 border-orange-200';
+        case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      }
     }
   };
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${
       isDark 
-        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
-        : 'bg-gradient-to-br from-indigo-50 via-white to-cyan-50'
-    }`} style={{
-      backgroundImage: isDark 
-        ? 'radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.15) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(236, 72, 153, 0.15) 0%, transparent 50%)'
-        : 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.12) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.08) 0%, transparent 50%)'
-    }}>
+        ? 'bg-gray-900' 
+        : 'bg-gray-50'
+    }`}>
       <ProfessionalHeader 
         onLogout={handleLogout}
         isDark={isDark}
@@ -155,25 +160,21 @@ const Stakeholders = () => {
 
       <main className="max-w-7xl mx-auto p-6">
         {/* Header Section */}
-        <div className={`rounded-3xl p-8 mb-8 border ${
+        <div className={`rounded-xl p-6 mb-6 ${
           isDark 
-            ? 'bg-gray-800/90 border-gray-700/50 shadow-2xl backdrop-blur-xl' 
-            : 'bg-white/80 backdrop-blur-2xl border-white/50 shadow-xl shadow-indigo-100/50'
-        } ${animationClass}`} style={{
-          boxShadow: isDark 
-            ? '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-            : '0 25px 50px -12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.4)'
-        }}>
+            ? 'bg-gray-800 border border-gray-700' 
+            : 'bg-white border border-gray-200 shadow-sm'
+        } ${animationClass}`}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className={`p-4 rounded-2xl ${
-                isDark ? 'bg-gradient-to-br from-purple-600 to-pink-600' : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-              } shadow-lg`}>
-                <span className="text-3xl">👥</span>
+              <div className={`p-3 rounded-lg ${
+                isDark ? 'bg-blue-600' : 'bg-blue-600'
+              }`}>
+                <span className="text-2xl text-white">👥</span>
               </div>
               <div>
-                <h1 className={`text-4xl font-bold ${theme.text.primary} mb-2`}>Stakeholder Management</h1>
-                <p className={`${theme.text.secondary} text-lg`}>Comprehensive stakeholder engagement and relationship tracking</p>
+                <h1 className={`text-3xl font-bold ${theme.text.primary} mb-1`}>Stakeholder Management</h1>
+                <p className={`${theme.text.secondary}`}>Comprehensive stakeholder engagement and relationship tracking</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -188,47 +189,40 @@ const Stakeholders = () => {
                   });
                   setShowAddForm(true);
                 }}
-                className={`group relative px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 overflow-hidden ${
+                className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
                   isDark 
-                    ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 hover:from-teal-500 hover:via-emerald-500 hover:to-cyan-500 text-white shadow-2xl hover:shadow-teal-500/30'
-                    : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 hover:from-teal-400 hover:via-emerald-400 hover:to-cyan-400 text-white shadow-2xl hover:shadow-teal-500/40'
-                } transform hover:scale-105 hover:-translate-y-1`}
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <span className="text-lg">+</span>
-                  </div>
-                  <span>Add New Stakeholder</span>
-                  <div className="w-2 h-2 rounded-full bg-white/40 animate-pulse"></div>
-                </div>
+                + Add Stakeholder
               </button>
             </div>
           </div>
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className={`p-4 rounded-xl ${
-              isDark ? 'bg-gray-700/50' : 'bg-white/60'
-            } backdrop-blur-sm border border-white/20`}>
+            <div className={`p-4 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
+            }`}>
               <div className="text-2xl font-bold text-green-600">{stakeholders.filter(s => s.engagement === 'High').length}</div>
               <div className={`text-sm ${theme.text.secondary}`}>High Engagement</div>
             </div>
-            <div className={`p-4 rounded-xl ${
-              isDark ? 'bg-gray-700/50' : 'bg-white/60'
-            } backdrop-blur-sm border border-white/20`}>
+            <div className={`p-4 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
+            }`}>
               <div className="text-2xl font-bold text-yellow-600">{stakeholders.filter(s => s.engagement === 'Medium').length}</div>
               <div className={`text-sm ${theme.text.secondary}`}>Medium Engagement</div>
             </div>
-            <div className={`p-4 rounded-xl ${
-              isDark ? 'bg-gray-700/50' : 'bg-white/60'
-            } backdrop-blur-sm border border-white/20`}>
+            <div className={`p-4 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
+            }`}>
               <div className="text-2xl font-bold text-red-600">{stakeholders.filter(s => s.engagement === 'Low').length}</div>
               <div className={`text-sm ${theme.text.secondary}`}>Low Engagement</div>
             </div>
-            <div className={`p-4 rounded-xl ${
-              isDark ? 'bg-gray-700/50' : 'bg-white/60'
-            } backdrop-blur-sm border border-white/20`}>
+            <div className={`p-4 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
+            }`}>
               <div className="text-2xl font-bold text-blue-600">{Math.round(stakeholders.reduce((acc, s) => acc + s.satisfaction, 0) / stakeholders.length)}%</div>
               <div className={`text-sm ${theme.text.secondary}`}>Avg Satisfaction</div>
             </div>
@@ -561,11 +555,11 @@ const Stakeholders = () => {
               style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => setSelectedStakeholder(selectedStakeholder === stakeholder.id ? null : stakeholder.id)}
             >
-              <div className={`p-6 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${
+              <div className={`p-6 rounded-lg border transition-all duration-300 ${
                 isDark 
-                  ? 'bg-gray-800/80 border-gray-700/50 hover:bg-gray-800/90 hover:border-gray-600' 
-                  : 'bg-white/80 border-white/50 hover:bg-white/90 hover:border-white/70'
-              } shadow-lg hover:shadow-2xl group-hover:shadow-indigo-500/10`}>
+                  ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
+                  : 'bg-white border-gray-200 hover:shadow-md'
+              }`}>
                 
                 {/* Card Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -592,7 +586,7 @@ const Stakeholders = () => {
                       }}
                       className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                         isDark 
-                          ? 'bg-white hover:bg-gray-100 text-red-600 border border-red-600'
+                          ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/50'
                           : 'bg-white hover:bg-gray-50 text-red-600 border border-red-600'
                       }`}
                       title="Delete Stakeholder"

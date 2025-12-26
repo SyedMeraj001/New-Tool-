@@ -4,6 +4,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import companyLogo from '../companyLogo.jpg';
 import { getUserRole, USER_ROLES } from '../utils/rbac';
 import ApprovalsPanel from './ApprovalsPanel';
+import TwoFactorSetup from './TwoFactorSetup';
+import EncryptionSetup from './EncryptionSetup';
+import SecureStorage from '../utils/secureStorage';
 
 const ProfessionalHeader = ({ onLogout, actions = [] }) => {
   const { isDark, toggleTheme } = useTheme();
@@ -15,6 +18,11 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
   const [backgroundTheme, setBackgroundTheme] = useState(localStorage.getItem('backgroundTheme') || null);
   const [showApprovals, setShowApprovals] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [showSecuritySettings, setShowSecuritySettings] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [showEncryptionSetup, setShowEncryptionSetup] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(localStorage.getItem('2fa_enabled') === 'true');
+  const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(SecureStorage.isEncryptionEnabled());
   const currentUser = localStorage.getItem('currentUser');
   const [profilePic, setProfilePic] = useState(() => {
     const userKey = `userProfilePic_${currentUser || 'default'}`;
@@ -190,6 +198,40 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
       container.style.backgroundImage = '';
       container.style.backgroundColor = '';
     });
+  };
+
+  const handle2FAToggle = () => {
+    if (is2FAEnabled) {
+      if (window.confirm('Are you sure you want to disable Two-Factor Authentication?')) {
+        localStorage.removeItem('2fa_enabled');
+        localStorage.removeItem('2fa_method');
+        setIs2FAEnabled(false);
+      }
+    } else {
+      setShow2FASetup(true);
+    }
+  };
+
+  const handle2FAComplete = () => {
+    setShow2FASetup(false);
+    setIs2FAEnabled(true);
+  };
+
+  const handleEncryptionToggle = () => {
+    if (isEncryptionEnabled) {
+      if (window.confirm('Disabling encryption will decrypt all data. Continue?')) {
+        localStorage.removeItem('encryption_enabled');
+        setIsEncryptionEnabled(false);
+        alert('Encryption disabled.');
+      }
+    } else {
+      setShowEncryptionSetup(true);
+    }
+  };
+
+  const handleEncryptionComplete = () => {
+    setShowEncryptionSetup(false);
+    setIsEncryptionEnabled(true);
   };
 
   useEffect(() => {
@@ -471,6 +513,32 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                         </div>
                       </div>
 
+                      {/* Security Settings */}
+                      <div className={`mb-4 p-3 rounded-xl border transition-all duration-200 ${
+                        isDark 
+                          ? 'bg-gradient-to-br from-gray-800/50 to-gray-700/50 border-gray-600/30' 
+                          : 'bg-gradient-to-br from-gray-50/80 to-white/80 border-gray-200/50'
+                      }`}>
+                        <button
+                          onClick={() => setShowSecuritySettings(true)}
+                          className={`w-full flex items-center justify-between p-2 rounded-lg transition-all duration-200 ${
+                            isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">🔒</span>
+                            <p className={`text-sm font-semibold ${
+                              isDark ? 'text-gray-200' : 'text-gray-700'
+                            }`}>
+                              Security Settings
+                            </p>
+                          </div>
+                          <span className={`text-xs ${
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                          }`}>▶</span>
+                        </button>
+                      </div>
+
                       {/* Logout Button */}
                       <button
                         onClick={() => {
@@ -491,6 +559,146 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
           </div>
         </div>
       </div>
+
+      {/* Security Settings Modal */}
+      {showSecuritySettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className={`w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`} style={{ margin: 'auto' }}>
+            <div className="p-6 bg-gradient-to-r from-[#3a7a44] to-[#1b3a2d] text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-3">
+                    <span className="text-3xl">🔒</span>
+                    Security Settings
+                  </h2>
+                  <p className="text-white/80 mt-1">Manage your account security</p>
+                </div>
+                <button onClick={() => setShowSecuritySettings(false)} className="text-2xl text-white hover:text-red-300 hover:rotate-90 transition-all duration-300 hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center">✕</button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className={`p-6 rounded-lg border mb-4 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-3xl">🔐</div>
+                    <div>
+                      <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Two-Factor Authentication
+                      </h3>
+                      <p className={`text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Add an extra layer of security to your account
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handle2FAToggle}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                      is2FAEnabled
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {is2FAEnabled ? 'Disable' : 'Enable'}
+                  </button>
+                </div>
+
+                {is2FAEnabled && (
+                  <div className="mt-4 p-4 rounded-lg bg-green-50 border border-green-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-green-600 text-xl">✓</span>
+                      <span className={`font-semibold ${isDark ? 'text-green-800' : 'text-green-800'}`}>2FA is Active</span>
+                    </div>
+                    <p className="text-sm text-green-700">
+                      Method: {localStorage.getItem('2fa_method') === 'email' ? '📧 Email' : localStorage.getItem('2fa_method') === 'sms' ? '📱 SMS' : '🔐 Authenticator App'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className={`p-6 rounded-lg border mb-4 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-3xl">🔐</div>
+                    <div>
+                      <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Client-Side Encryption
+                      </h3>
+                      <p className={`text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        AES-256 encryption for all sensitive data
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleEncryptionToggle}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                      isEncryptionEnabled
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {isEncryptionEnabled ? 'Disable' : 'Enable'}
+                  </button>
+                </div>
+
+                {isEncryptionEnabled && (
+                  <div className="mt-4 p-4 rounded-lg bg-green-50 border border-green-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-green-600 text-xl">✓</span>
+                      <span className="font-semibold text-green-800">Encryption Active</span>
+                    </div>
+                    <p className="text-sm text-green-700">
+                      All data is encrypted with AES-256 before storage
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className={`p-6 rounded-lg border ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="text-3xl">💡</div>
+                  <div>
+                    <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Security Tips</h3>
+                  </div>
+                </div>
+                <ul className={`space-y-2 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <li className="flex items-start gap-2">
+                    <span>•</span>
+                    <span>Use a strong, unique password for your account</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>•</span>
+                    <span>Enable two-factor authentication for extra security</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>•</span>
+                    <span>Never share your password with anyone</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span>•</span>
+                    <span>Log out from shared or public devices</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {show2FASetup && (
+        <TwoFactorSetup
+          onComplete={handle2FAComplete}
+          onCancel={() => setShow2FASetup(false)}
+          userEmail={currentUser}
+        />
+      )}
+
+      {showEncryptionSetup && (
+        <EncryptionSetup
+          onComplete={handleEncryptionComplete}
+          onCancel={() => setShowEncryptionSetup(false)}
+        />
+      )}
     </header>
   );
 };

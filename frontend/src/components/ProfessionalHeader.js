@@ -594,8 +594,8 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
 
       {/* Security Settings Modal */}
       {showSecuritySettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <div className={`w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`} style={{ margin: 'auto' }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[99999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999 }}>
+          <div className={`w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`} style={{ margin: 'auto', zIndex: 100000 }}>
             <div className="p-6 bg-gradient-to-r from-[#3a7a44] to-[#1b3a2d] text-white">
               <div className="flex items-center justify-between">
                 <div>
@@ -718,18 +718,22 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
       )}
 
       {show2FASetup && (
-        <TwoFactorSetup
-          onComplete={handle2FAComplete}
-          onCancel={() => setShow2FASetup(false)}
-          userEmail={currentUser}
-        />
+        <div style={{ zIndex: 999999 }}>
+          <TwoFactorSetup
+            onComplete={handle2FAComplete}
+            onCancel={() => setShow2FASetup(false)}
+            userEmail={currentUser}
+          />
+        </div>
       )}
 
       {showEncryptionSetup && (
-        <EncryptionSetup
-          onComplete={handleEncryptionComplete}
-          onCancel={() => setShowEncryptionSetup(false)}
-        />
+        <div style={{ zIndex: 999999 }}>
+          <EncryptionSetup
+            onComplete={handleEncryptionComplete}
+            onCancel={() => setShowEncryptionSetup(false)}
+          />
+        </div>
       )}
     </header>
   );

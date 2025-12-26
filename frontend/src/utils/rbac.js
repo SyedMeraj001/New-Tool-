@@ -193,7 +193,15 @@ export const initializePreconfiguredUsers = () => {
 
 // Authenticate user
 export const authenticateUser = (email, password) => {
-  const users = JSON.parse(localStorage.getItem('systemUsers') || '[]');
-  const user = users.find(u => u.email === email && u.password === password);
+  // Check preconfigured users first
+  const systemUsers = JSON.parse(localStorage.getItem('systemUsers') || '[]');
+  let user = systemUsers.find(u => u.email === email && u.password === password);
+  
+  // If not found in system users, check approved users
+  if (!user) {
+    const approvedUsers = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
+    user = approvedUsers.find(u => u.email === email && u.password === password && u.status === 'approved');
+  }
+  
   return user || null;
 };

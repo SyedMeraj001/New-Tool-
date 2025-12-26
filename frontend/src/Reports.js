@@ -1588,8 +1588,8 @@ function Reports() {
       {/* ESG Metrics Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Environmental Metrics */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-bold bg-emerald-600 text-white p-3 -m-6 mb-4 rounded-t-xl">Environmental</h2>
+        <div className={`p-6 rounded-xl shadow ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+          <h2 className={`text-lg font-bold text-white p-3 -m-6 mb-4 rounded-t-xl ${isDark ? 'bg-emerald-600' : 'bg-emerald-600'}`}>Environmental</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-emerald-600 text-white">
@@ -1599,9 +1599,9 @@ function Reports() {
             </thead>
             <tbody className="divide-y">
               {getEnvironmentalMetrics().map((metric, i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="p-2 text-gray-700">{metric.name}</td>
-                  <td className="p-2 font-medium">{metric.value}</td>
+                <tr key={i} className={i % 2 === 0 ? (isDark ? 'bg-gray-700' : 'bg-gray-50') : (isDark ? 'bg-gray-800' : 'bg-white')}>
+                  <td className={`p-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{metric.name}</td>
+                  <td className={`p-2 font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{metric.value}</td>
                 </tr>
               ))}
             </tbody>
@@ -1609,8 +1609,8 @@ function Reports() {
         </div>
 
         {/* Social Metrics */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-bold bg-emerald-600 text-white p-3 -m-6 mb-4 rounded-t-xl">Social</h2>
+        <div className={`p-6 rounded-xl shadow ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+          <h2 className={`text-lg font-bold text-white p-3 -m-6 mb-4 rounded-t-xl ${isDark ? 'bg-emerald-600' : 'bg-emerald-600'}`}>Social</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-emerald-600 text-white">
@@ -1620,9 +1620,9 @@ function Reports() {
             </thead>
             <tbody className="divide-y">
               {getSocialMetrics().map((metric, i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="p-2 text-gray-700">{metric.name}</td>
-                  <td className="p-2 font-medium">{metric.value}</td>
+                <tr key={i} className={i % 2 === 0 ? (isDark ? 'bg-gray-700' : 'bg-gray-50') : (isDark ? 'bg-gray-800' : 'bg-white')}>
+                  <td className={`p-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{metric.name}</td>
+                  <td className={`p-2 font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{metric.value}</td>
                 </tr>
               ))}
             </tbody>
@@ -1633,8 +1633,8 @@ function Reports() {
       {/* Governance and Auto-Calculated Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Governance Metrics */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-bold bg-emerald-600 text-white p-3 -m-6 mb-4 rounded-t-xl">Governance</h2>
+        <div className={`p-6 rounded-xl shadow ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+          <h2 className={`text-lg font-bold text-white p-3 -m-6 mb-4 rounded-t-xl ${isDark ? 'bg-emerald-600' : 'bg-emerald-600'}`}>Governance</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-emerald-600 text-white">
@@ -1644,9 +1644,9 @@ function Reports() {
             </thead>
             <tbody className="divide-y">
               {getGovernanceMetrics().map((metric, i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="p-2 text-gray-700">{metric.name}</td>
-                  <td className="p-2 font-medium">{metric.value}</td>
+                <tr key={i} className={i % 2 === 0 ? (isDark ? 'bg-gray-700' : 'bg-gray-50') : (isDark ? 'bg-gray-800' : 'bg-white')}>
+                  <td className={`p-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{metric.name}</td>
+                  <td className={`p-2 font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{metric.value}</td>
                 </tr>
               ))}
             </tbody>
@@ -1654,8 +1654,8 @@ function Reports() {
         </div>
 
         {/* Auto-Calculated Metrics */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-bold bg-emerald-600 text-white p-3 -m-6 mb-4 rounded-t-xl">Auto-Calculated Metrics</h2>
+        <div className={`p-6 rounded-xl shadow ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+          <h2 className={`text-lg font-bold text-white p-3 -m-6 mb-4 rounded-t-xl ${isDark ? 'bg-emerald-600' : 'bg-emerald-600'}`}>Auto-Calculated Metrics</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-emerald-600 text-white">
@@ -1665,9 +1665,9 @@ function Reports() {
             </thead>
             <tbody className="divide-y">
               {getCalculatedMetrics().map((metric, i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="p-2 text-gray-700">{metric.name}</td>
-                  <td className="p-2 font-medium">{metric.value}</td>
+                <tr key={i} className={i % 2 === 0 ? (isDark ? 'bg-gray-700' : 'bg-gray-50') : (isDark ? 'bg-gray-800' : 'bg-white')}>
+                  <td className={`p-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{metric.name}</td>
+                  <td className={`p-2 font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{metric.value}</td>
                 </tr>
               ))}
             </tbody>

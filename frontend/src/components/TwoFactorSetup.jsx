@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const TwoFactorSetup = ({ onComplete, onCancel, userEmail }) => {
   const [step, setStep] = useState(1);
@@ -36,9 +37,9 @@ const TwoFactorSetup = ({ onComplete, onCancel, userEmail }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full">
+  return createPortal(
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" style={{ zIndex: 999999, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full" style={{ zIndex: 1000000 }}>
         {step === 1 && !showPhoneInput && (
           <>
             <div className="text-center mb-6">
@@ -233,7 +234,8 @@ const TwoFactorSetup = ({ onComplete, onCancel, userEmail }) => {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

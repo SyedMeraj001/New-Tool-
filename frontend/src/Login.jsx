@@ -19,6 +19,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
+  const [signupRole, setSignupRole] = useState('');
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
@@ -40,21 +41,47 @@ const Login = () => {
         setMessage('Passwords do not match');
         return;
       }
+      if (!signupRole) {
+        setMessage('Please select a role');
+        return;
+      }
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3004'}/api/auth/signup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, fullName })
+          body: JSON.stringify({ email, password, fullName, role: signupRole })
         });
         
         const data = await response.json();
         setMessage(data.message || 'Account request submitted! Awaiting admin approval.');
       } catch (error) {
-        const pendingUsers = JSON.parse(localStorage.getItem('pendingUsers') || '[]');
-        const newUser = { email, password, fullName, requestDate: new Date().toISOString(), status: 'pending' };
-        pendingUsers.push(newUser);
-        localStorage.setItem('pendingUsers', JSON.stringify(pendingUsers));
-        setMessage('Account request submitted! (Offline mode)');
+        // Store signup request for super admin approval
+        const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
+        const newRequest = {
+          id: Date.now(),
+          email,
+          password,
+          fullName,
+          role: signupRole,
+          requestDate: new Date().toISOString(),
+          status: 'pending'
+        };
+        signupRequests.push(newRequest);
+        localStorage.setItem('signupRequests', JSON.stringify(signupRequests));
+        
+        // Add notification for super admin
+        const notifications = JSON.parse(localStorage.getItem('superAdminNotifications') || '[]');
+        notifications.push({
+          id: Date.now(),
+          type: 'signup_request',
+          message: `New signup request from ${fullName} (${email}) for ${signupRole} role`,
+          timestamp: new Date().toISOString(),
+          read: false,
+          requestId: newRequest.id
+        });
+        localStorage.setItem('superAdminNotifications', JSON.stringify(notifications));
+        
+        setMessage('Account request submitted! Awaiting super admin approval.');
       }
       setIsSignup(false);
       return;
@@ -64,6 +91,12 @@ const Login = () => {
     const user = authenticateUser(email, password);
     
     if (user) {
+      // If role is selected, validate that user's role matches selected role
+      if (selectedRole && user.role !== selectedRole) {
+        setMessage('❌ Invalid credentials for the selected role. Please check your role selection.');
+        return;
+      }
+      
       // Check if 2FA is enabled
       const is2FAEnabled = localStorage.getItem('2fa_enabled') === 'true';
       
@@ -143,7 +176,7 @@ const Login = () => {
         <div className="absolute top-3/4 left-1/3 w-20 h-20 bg-[#1b3a2d]/7 rounded-full animate-pulse" style={{animationDuration: '2s'}}></div>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3a7a44]/3 to-transparent animate-wave"></div>
       </div>
-      <div className={`container relative max-w-5xl w-full h-[550px] rounded-2xl shadow-2xl overflow-hidden border transition-all duration-1000 ${isSignup ? 'active' : ''}`} style={isDark ? { background: 'rgba(17,24,39,0.9)', border: '2px solid #3a7a44', boxShadow: '0 0 25px rgba(58, 122, 68, 0.3)' } : { background: 'rgba(255,255,255,0.9)', border: '2px solid #3a7a44', boxShadow: '0 0 25px rgba(58, 122, 68, 0.2)' }}>
+      <div className={`container relative max-w-5xl w-full h-[650px] rounded-2xl shadow-2xl overflow-hidden border transition-all duration-1000 ${isSignup ? 'active' : ''}`} style={isDark ? { background: 'rgba(17,24,39,0.9)', border: '2px solid #3a7a44', boxShadow: '0 0 25px rgba(58, 122, 68, 0.3)' } : { background: 'rgba(255,255,255,0.9)', border: '2px solid #3a7a44', boxShadow: '0 0 25px rgba(58, 122, 68, 0.2)' }}>
 
         <div className={`curved-shape absolute right-0 top-[-5px] h-[700px] w-[1000px] transition-all duration-1500 ease-in-out ${isSignup ? 'transform rotate-0 skew-y-0' : 'transform rotate-12 skew-y-12'}`} style={{
           background: isDark ? 'linear-gradient(45deg, #1f2937, #3a7a44)' : 'linear-gradient(45deg, #f8fafc, #3a7a44)',
@@ -173,38 +206,6 @@ const Login = () => {
           </div>
           
           <form onSubmit={handleSubmit}>
-            {/* Role Selector */}
-            <div className={`animation mb-4 transition-all duration-700 ${!isSignup ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0'}`} style={{
-              transitionDelay: !isSignup ? 'calc(0.1s * 21)' : 'calc(0.1s * 0)'
-            }}>
-              <select
-                value={selectedRole}
-                onChange={(e) => {
-                  const role = e.target.value;
-                  setSelectedRole(role);
-                  if (role === 'super_admin') {
-                    setEmail('superadmin1@esgenius.com');
-                    setPassword('Admin@2025');
-                  } else if (role === 'supervisor') {
-                    setEmail('supervisor1@esgenius.com');
-                    setPassword('Super@2025');
-                  } else if (role === 'data_entry') {
-                    setEmail('dataentry1@esgenius.com');
-                    setPassword('Data@2025');
-                  } else {
-                    setEmail('');
-                    setPassword('');
-                  }
-                }}
-                className={`w-full px-4 py-2 rounded-lg border-2 text-base font-semibold transition-all duration-500 ${isDark ? 'bg-gray-800 border-[#3a7a44] text-white' : 'bg-white border-[#3a7a44] text-gray-900'}`}
-              >
-                <option value="">Select Role (Quick Login)</option>
-                <option value="super_admin">🔴 Super Admin - Full Access</option>
-                <option value="supervisor">🔵 Supervisor - Edit & Delete</option>
-                <option value="data_entry">🟢 Data Entry - Update Only</option>
-              </select>
-            </div>
-
             <div className={`input-box animation relative w-full h-12 mt-6 transition-all duration-700 ${!isSignup ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0'}`} style={{
               transitionDelay: !isSignup ? 'calc(0.1s * 22)' : 'calc(0.1s * 1)'
             }}>
@@ -237,6 +238,23 @@ const Login = () => {
               >
                 {showPassword ? <FaEyeSlash /> : <FaLock />}
               </button>
+            </div>
+
+            {/* Role Selector moved below password */}
+            <div className={`animation mb-4 mt-6 transition-all duration-700 ${!isSignup ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0'}`} style={{
+              transitionDelay: !isSignup ? 'calc(0.1s * 23.5)' : 'calc(0.1s * 2.5)'
+            }}>
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                required
+                className={`w-full px-4 py-2 rounded-lg border-2 text-base font-semibold transition-all duration-500 ${isDark ? 'bg-gray-800 border-[#3a7a44] text-white' : 'bg-white border-[#3a7a44] text-gray-900'}`}
+              >
+                <option value="">Select Your Role</option>
+                <option value="super_admin">🔴 Super Admin</option>
+                <option value="supervisor">🔵 Supervisor</option>
+                <option value="data_entry">🟢 Data Entry</option>
+              </select>
             </div>
 
             <div className={`input-box animation mt-6 transition-all duration-700 ${!isSignup ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0'}`} style={{
@@ -295,23 +313,23 @@ const Login = () => {
           }}>We are happy to have you with us again. If you need anything, we are here to help.</p>
         </div>
 
-        <div className="form-box Register absolute top-0 right-0 w-1/2 h-full flex justify-center flex-col px-16">
-          <div className={`animation flex items-center justify-center gap-3 mb-6 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+        <div className="form-box Register absolute top-0 right-0 w-1/2 h-full flex justify-center flex-col px-12 py-8">
+          <div className={`animation flex items-center justify-center gap-3 mb-4 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
             transitionDelay: isSignup ? 'calc(0.1s * 17)' : 'calc(0.1s * 0)'
           }}>
             {logo ? (
-              <img src={logo} alt="Company logo" className="w-12 h-12 rounded-full border-2 border-[#3a7a44]/30" />
+              <img src={logo} alt="Company logo" className="w-10 h-10 rounded-full border-2 border-[#3a7a44]/30" />
             ) : (
-              <FaLeaf className={`text-2xl ${isDark ? 'text-[#3a7a44]' : 'text-[#3a7a44]'}`} />
+              <FaLeaf className={`text-xl ${isDark ? 'text-[#3a7a44]' : 'text-[#3a7a44]'}`} />
             )}
             <div className="text-center">
-              <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>ESGenius Tech</h2>
-              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Register</p>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>ESGenius Tech</h2>
+              <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Register</p>
             </div>
           </div>
           
-          <form onSubmit={handleSubmit}>
-            <div className={`input-box animation relative w-full h-12 mt-6 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 18)' : 'calc(0.1s * 1)'
             }}>
               <input
@@ -319,13 +337,29 @@ const Login = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required={isSignup}
-                className={`w-full h-full bg-transparent border-none outline-none text-base font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
+                className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
               />
-              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-base transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${fullName ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Username</label>
-              <FaUser className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-lg transition-all duration-500 ${fullName ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
+              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${fullName ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Username</label>
+              <FaUser className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${fullName ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
             </div>
 
-            <div className={`input-box animation relative w-full h-12 mt-6 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+            <div className={`animation transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+              transitionDelay: isSignup ? 'calc(0.1s * 18.5)' : 'calc(0.1s * 1.5)'
+            }}>
+              <select
+                value={signupRole}
+                onChange={(e) => setSignupRole(e.target.value)}
+                required={isSignup}
+                className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all duration-500 ${isDark ? 'bg-gray-800 border-[#3a7a44] text-white' : 'bg-white border-[#3a7a44] text-gray-900'}`}
+              >
+                <option value="">Select Role</option>
+                <option value="data_entry">Data Entry</option>
+                <option value="supervisor">Supervisor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 19)' : 'calc(0.1s * 2)'
             }}>
               <input
@@ -333,13 +367,13 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className={`w-full h-full bg-transparent border-none outline-none text-base font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
+                className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
               />
-              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-base transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${email ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Email</label>
-              <FaEnvelope className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-lg transition-all duration-500 ${email ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
+              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${email ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Email</label>
+              <FaEnvelope className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${email ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
             </div>
 
-            <div className={`input-box animation relative w-full h-12 mt-6 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+            <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 19)' : 'calc(0.1s * 3)'
             }}>
               <input
@@ -347,21 +381,47 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className={`w-full h-full bg-transparent border-none outline-none text-base font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
+                className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
               />
-              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-base transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${password ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Password</label>
-              <FaLock className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-lg transition-all duration-500 ${password ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
+              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${password ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Password</label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${password ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaLock />}
+              </button>
             </div>
 
-            <div className={`input-box animation mt-6 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+            <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+              transitionDelay: isSignup ? 'calc(0.1s * 19.5)' : 'calc(0.1s * 3.5)'
+            }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required={isSignup}
+                className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
+              />
+              <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${confirmPassword ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Confirm Password</label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${confirmPassword ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaLock />}
+              </button>
+            </div>
+
+            <div className={`input-box animation mt-4 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 20)' : 'calc(0.1s * 4)'
             }}>
-              <button type="submit" className="btn relative w-full h-11 bg-transparent rounded-full cursor-pointer text-base font-semibold border-2 border-[#3a7a44] overflow-hidden z-10 text-white transition-all duration-500 hover:before:top-0">
+              <button type="submit" className="btn relative w-full h-10 bg-transparent rounded-full cursor-pointer text-sm font-semibold border-2 border-[#3a7a44] overflow-hidden z-10 text-white transition-all duration-500 hover:before:top-0">
                 Register
               </button>
             </div>
 
-            <div className={`regi-link animation text-sm text-center mt-5 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+            <div className={`regi-link animation text-xs text-center mt-3 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 21)' : 'calc(0.1s * 5)'
             }}>
               <p className={isDark ? 'text-white' : 'text-gray-900'}>

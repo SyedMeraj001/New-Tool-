@@ -16,6 +16,10 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
   const [showApprovals, setShowApprovals] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const currentUser = localStorage.getItem('currentUser');
+  const [profilePic, setProfilePic] = useState(() => {
+    const userKey = `userProfilePic_${currentUser || 'default'}`;
+    return localStorage.getItem(userKey) || null;
+  });
   const userRole = getUserRole();
   const isAdmin = userRole === USER_ROLES.SUPER_ADMIN;
 
@@ -104,6 +108,26 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     }));
     // Also dispatch custom event for immediate updates
     window.dispatchEvent(new CustomEvent('alertsCleared'));
+  };
+
+  const handleProfilePicUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const picUrl = e.target.result;
+        setProfilePic(picUrl);
+        const userKey = `userProfilePic_${currentUser || 'default'}`;
+        localStorage.setItem(userKey, picUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProfilePic = () => {
+    setProfilePic(null);
+    const userKey = `userProfilePic_${currentUser || 'default'}`;
+    localStorage.removeItem(userKey);
   };
 
   const loadPendingApprovals = () => {
@@ -232,18 +256,6 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
 
           {/* Actions */}
           <div className="flex items-center space-x-2 flex-shrink-0">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-all duration-200 ${
-                isDark 
-                  ? 'text-teal-100 hover:bg-white/10' 
-                  : 'text-teal-100 hover:bg-white/10'
-              }`}
-            >
-              <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
-            </button>
-
             {/* Notifications */}
             <div className="relative">
               <button 
@@ -345,27 +357,131 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold hover:bg-blue-700 transition-colors"
+                className={`relative p-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                  showUserMenu 
+                    ? 'bg-white/20 shadow-lg' 
+                    : isDark 
+                      ? 'text-teal-100 hover:bg-white/10' 
+                      : 'text-teal-100 hover:bg-white/10'
+                } group`}
               >
-                U
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-teal-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                  {profilePic ? (
+                    <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white text-sm font-bold">👤</span>
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
               </button>
               
               {showUserMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                  <div className={`absolute right-0 top-10 w-48 rounded-lg shadow-xl border z-50 ${
-                    isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                  <div className={`absolute right-0 top-12 w-72 rounded-2xl shadow-2xl border backdrop-blur-xl z-50 transform transition-all duration-300 scale-100 opacity-100 ${
+                    isDark 
+                      ? 'bg-gray-900/95 border-gray-700/50' 
+                      : 'bg-white/95 border-gray-200/50'
                   }`}>
-                    <div className="p-3">
+                    {/* Header with gradient background */}
+                    <div className="relative overflow-hidden rounded-t-2xl">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-teal-600"></div>
+                      <div className="relative p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg overflow-hidden">
+                              {profilePic ? (
+                                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-white text-xl">👤</span>
+                              )}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-white text-base">
+                              {currentUser || 'User'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs px-2 py-1 bg-white/20 rounded-full text-white font-medium">
+                                {userRole === USER_ROLES.SUPER_ADMIN ? 'Super Admin' :
+                                 userRole === USER_ROLES.SUPERVISOR ? 'Supervisor' :
+                                 userRole === USER_ROLES.DATA_ENTRY ? 'Data Entry' : 'User'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Profile Picture Upload Controls */}
+                        <div className="mt-3 pt-3 border-t border-white/20">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleProfilePicUpload}
+                              className="hidden"
+                              id="profile-pic-upload"
+                            />
+                            <label
+                              htmlFor="profile-pic-upload"
+                              className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium rounded-lg cursor-pointer transition-all duration-200 backdrop-blur-sm"
+                            >
+                              🖼️ {profilePic ? 'Change Photo' : 'Upload Photo'}
+                            </label>
+                            {profilePic && (
+                              <button
+                                onClick={removeProfilePic}
+                                className="px-3 py-1.5 bg-red-500/30 hover:bg-red-500/40 text-white text-xs font-medium rounded-lg transition-all duration-200 backdrop-blur-sm"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4">
+                      {/* Theme Toggle */}
+                      <div className={`mb-4 p-3 rounded-xl border transition-all duration-200 ${
+                        isDark 
+                          ? 'bg-gradient-to-br from-gray-800/50 to-gray-700/50 border-gray-600/30' 
+                          : 'bg-gradient-to-br from-gray-50/80 to-white/80 border-gray-200/50'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{isDark ? '🌙' : '☀️'}</span>
+                            <p className={`text-sm font-semibold ${
+                              isDark ? 'text-gray-200' : 'text-gray-700'
+                            }`}>
+                              Theme
+                            </p>
+                          </div>
+                          <button
+                            onClick={toggleTheme}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                              isDark 
+                                ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30' 
+                                : 'bg-blue-500/20 text-blue-600 hover:bg-blue-500/30'
+                            }`}
+                          >
+                            {isDark ? 'Light Mode' : 'Dark Mode'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Logout Button */}
                       <button
                         onClick={() => {
                           localStorage.removeItem('userRole');
                           setShowUserMenu(false);
                           onLogout();
                         }}
-                        className="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] group"
                       >
-                        🚺 Logout
+                        <span className="group-hover:rotate-12 transition-transform duration-200">🚪</span> 
+                        <span>Sign Out</span>
                       </button>
                     </div>
                   </div>

@@ -115,10 +115,42 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const picUrl = e.target.result;
-        setProfilePic(picUrl);
-        const userKey = `userProfilePic_${currentUser || 'default'}`;
-        localStorage.setItem(userKey, picUrl);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Resize to max 100x100 to reduce storage size
+          const maxSize = 100;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          
+          try {
+            setProfilePic(compressedDataUrl);
+            const userKey = `userProfilePic_${currentUser || 'default'}`;
+            localStorage.setItem(userKey, compressedDataUrl);
+          } catch (error) {
+            alert('Image too large. Please choose a smaller image.');
+          }
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }

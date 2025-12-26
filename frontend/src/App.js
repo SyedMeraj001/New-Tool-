@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import Login from "./Login.jsx";
+import Profile from "./Profile";
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SectorProvider } from './contexts/SectorContext';
 import AuditTrailViewer from './components/AuditTrailViewer';
@@ -73,6 +74,7 @@ const Layout = () => {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><LazyDashboard /></ProtectedRoute>} />
             <Route path="/sectors" element={<ProtectedRoute><SectorSelector /></ProtectedRoute>} />
             <Route path="/sector/:sector" element={<ProtectedRoute><SectorDashboard /></ProtectedRoute>} />

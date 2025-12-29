@@ -1,69 +1,44 @@
-// ================================
-// server.js – Main Entry Point
-// ================================
-
+﻿// server.js - Main Entry Point
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const { sequelize } = require("./models");
 
-// Database
-const { Sequelize } = require("sequelize");
+// Routes
+const workflowRoutes = require("./routes/workflowRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const esgRoutes = require("./routes/esgRoutes");
 
-// ================================
-// App Init
-// ================================
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ================================
 // Middleware
-// ================================
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [process.env.FRONTEND_URL || "http://localhost:3000", "http://localhost:3001"],
   credentials: true,
 }));
 app.use(express.json());
 
-// ================================
-// Database Connection
-// ================================
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: "postgres",
-    logging: false,
-  }
-);
+// Routes
+app.get("/", (req, res) => {
+  res.json({ message: "ESG Dashboard Backend is running", status: "healthy" });
+});
 
-// Test DB Connection
-(async () => {
+app.use("/api/workflows", workflowRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/esg", esgRoutes);
+
+// Start Server
+app.listen(PORT, async () => {
+  console.log("Server running on port " + PORT);
   try {
     await sequelize.authenticate();
-    console.log("✅ Database connected successfully");
-  } catch (error) {
-    console.error("❌ Database connection failed:", error.message);
+    console.log("Database connected successfully");
+    await sequelize.sync({ alter: true });
+    console.log("Models synchronized");
+  } catch (err) {
+    console.error("Database error:", err.message);
   }
-})();
-
-// ================================
-// Routes (temporary test route)
-// ================================
-app.get("/", (req, res) => {
-  res.json({
-    message: "ESG Dashboard Backend is running 🚀",
-  });
 });
 
-// ================================
-// Start Server
-// ================================
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
-
-// Export sequelize for models later
-module.exports = sequelize;
+module.exports = app;

@@ -3,7 +3,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaLeaf, FaUser } from 'react-icons/fa';
 import logo from './companyLogo.jpg';
-import { authenticateUser, initializePreconfiguredUsers, getRoleDisplayName } from './utils/rbac';
+import { initializePreconfiguredUsers, getRoleDisplayName } from './utils/rbac';
 import TwoFactorAuth from './components/TwoFactorAuth';
 
 const Login = () => {
@@ -27,82 +27,40 @@ const Login = () => {
   }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isSignup) {
-      if (password !== confirmPassword) {
-        setMessage('Passwords do not match');
-        return;
-      }
-      if (!signupRole) {
-        setMessage('Please select a role');
-        return;
-      }
-      try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3004'}/api/auth/signup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, fullName, role: signupRole })
-        });
-        
-        const data = await response.json();
-        setMessage(data.message || 'Account request submitted! Awaiting admin approval.');
-      } catch (error) {
-        // Store signup request for super admin approval
-        const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
-        const newRequest = {
-          id: Date.now(),
+  e.preventDefault();
+  setMessage("");
+
+  try {
+    const res = await fetch(
+      `${process.env.REACT_APP_API_URL}/api/auth/login`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // IMPORTANT
+        body: JSON.stringify({
           email,
           password,
-          fullName,
-          role: signupRole,
-          requestDate: new Date().toISOString(),
-          status: 'pending'
-        };
-        signupRequests.push(newRequest);
-        localStorage.setItem('signupRequests', JSON.stringify(signupRequests));
-        
-        // Add notification for super admin
-        const notifications = JSON.parse(localStorage.getItem('superAdminNotifications') || '[]');
-        notifications.push({
-          id: Date.now(),
-          type: 'signup_request',
-          message: `New signup request from ${fullName} (${email}) for ${signupRole} role`,
-          timestamp: new Date().toISOString(),
-          read: false,
-          requestId: newRequest.id
-        });
-        localStorage.setItem('superAdminNotifications', JSON.stringify(notifications));
-        
-        setMessage('Account request submitted! Awaiting super admin approval.');
+          role: selectedRole
+        })
       }
-      setIsSignup(false);
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setMessage(`❌ ${data.message}`);
       return;
     }
-    
-    // Authenticate user with RBAC system
-    const user = authenticateUser(email, password);
-    
-    if (user) {
-      // If role is selected, validate that user's role matches selected role
-      if (selectedRole && user.role !== selectedRole) {
-        setMessage('❌ Invalid credentials for the selected role. Please check your role selection.');
-        return;
-      }
-      
-      // Check if 2FA is enabled
-      const is2FAEnabled = localStorage.getItem('2fa_enabled') === 'true';
-      
-      if (is2FAEnabled) {
-        setPendingUser(user);
-        setShow2FA(true);
-      } else {
-        completeLogin(user);
-      }
-    } else {
-      setMessage('❌ Invalid email or password. Please try again.');
-    }
-  };
+
+    setMessage(`✅ Welcome ${data.user.fullName} (${data.user.role})`);
+
+    setTimeout(() => navigate("/"), 800);
+
+  } catch (err) {
+    setMessage("❌ Server not reachable");
+  }
+};
+
 
   const completeLogin = (user) => {
     localStorage.setItem('currentUser', user.email);

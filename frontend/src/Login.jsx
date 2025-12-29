@@ -3,7 +3,6 @@ import { useTheme } from './contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaLeaf, FaUser } from 'react-icons/fa';
 import logo from './companyLogo.jpg';
-import { initializePreconfiguredUsers, getRoleDisplayName } from './utils/rbac';
 import TwoFactorAuth from './components/TwoFactorAuth';
 
 const Login = () => {
@@ -22,9 +21,6 @@ const Login = () => {
 
 
   // Initialize preconfigured users on component mount
-  useEffect(() => {
-    initializePreconfiguredUsers();
-  }, []);
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -60,20 +56,6 @@ const Login = () => {
     setMessage("❌ Server not reachable");
   }
 };
-
-
-  const completeLogin = (user) => {
-    localStorage.setItem('currentUser', user.email);
-    localStorage.setItem('userRole', user.role);
-    localStorage.setItem('userFullName', user.fullName);
-    localStorage.setItem('isLoggedIn', 'true');
-    
-    setMessage(`✅ Login successful! Welcome ${user.fullName} (${getRoleDisplayName(user.role)})`);
-    
-    setTimeout(() => {
-      navigate('/');
-    }, 1000);
-  };
 
   const handle2FAVerify = (code) => {
     setShow2FA(false);

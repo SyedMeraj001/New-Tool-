@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:5000/api';
 
 class APIService {
   static async request(endpoint, options = {}) {

@@ -1,10 +1,11 @@
+// frontend/src/Login.jsx
 import { useState, useEffect } from 'react';
 import { useTheme } from './contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaLeaf, FaUser } from 'react-icons/fa';
 import logo from './companyLogo.jpg';
 import TwoFactorAuth from './components/TwoFactorAuth';
-
+import APIService from "./services/apiService";
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ const Login = () => {
   setMessage("");
 
   try {
-    const res = await fetch(
+    /*const res = await fetch(
       `${process.env.REACT_APP_API_URL}/api/auth/login`,
       {
         method: "POST",
@@ -39,7 +40,21 @@ const Login = () => {
           role: selectedRole
         })
       }
-    );
+    );*/
+    const res = await fetch(
+  `${process.env.REACT_APP_API_URL}/api/auth/login`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      email,
+      password,
+      role: selectedRole,
+    }),
+  }
+);
+
 
     const data = await res.json();
 

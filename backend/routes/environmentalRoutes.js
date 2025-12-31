@@ -1,14 +1,15 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
-  saveEnvironmentalData,
-  getEnvironmentalData,
-} = require("../controllers/environmentalController");
+
+import {
+  saveEnvironmental,
+  getEnvironmental,
+} from "../controllers/environmentalController.js";
 
 // Save / Update Environmental (Step 2)
-router.post("/", saveEnvironmentalData);
+router.post("/", saveEnvironmental);
 
 // Get Environmental by Company
-router.get("/:companyId", getEnvironmentalData);
+router.get("/:companyId", getEnvironmental);
 
-module.exports = router;
+export default router;

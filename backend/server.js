@@ -1,14 +1,15 @@
 // ================================
-// server.js – Main Entry Point
+// server.js – Main Entry Point (ESM)
 // ================================
 
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const { Sequelize } = require("sequelize");
-//const environmentalRoutes = require("./routes/environmentalRoutes");
-const environmentalRoutes = require("./routes/environmentalRoutes");
-app.use("/api/environmental", environmentalRoutes);
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
+import cors from "cors";
+
+// ✅ IMPORT shared sequelize instance (must also be ESM)
+import sequelize from "./config/db.js";
 
 // ================================
 // App Init
@@ -28,22 +29,34 @@ app.use(
 app.use(express.json());
 
 // ================================
-// Database Connection (Sequelize)
+// Routes (ALL DEFAULT IMPORTS)
 // ================================
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: "postgres",
-    logging: false,
-  }
-);
+import companyRoutes from "./routes/companyRoutes.js";
+import environmentalRoutes from "./routes/environmentalRoutes.js";
+import socialRoutes from "./routes/socialRoutes.js";
+import governanceRoutes from "./routes/governanceRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import submitRoutes from "./routes/submitRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+
+// Health Check
+app.get("/", (req, res) => {
+  res.json({
+    message: "ESG Dashboard Backend is running 🚀",
+  });
+});
+
+// ESG Steps
+app.use("/api/company", companyRoutes);
+app.use("/api/environmental", environmentalRoutes);
+app.use("/api/social", socialRoutes);
+app.use("/api/governance", governanceRoutes);
+app.use("/api/review", reviewRoutes);
+app.use("/api/submit", submitRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // ================================
-// DB Authenticate & Sync
+// DB Init & Server Start
 // ================================
 (async () => {
   try {
@@ -52,37 +65,11 @@ const sequelize = new Sequelize(
 
     await sequelize.sync({ alter: true });
     console.log("✅ Database synced successfully");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   } catch (error) {
-    console.error("❌ Database connection failed:", error.message);
+    console.error("❌ Database error:", error.message);
   }
 })();
-
-// ================================
-// Routes
-// ================================
-const companyRoutes = require("./routes/companyRoutes");
-
-// Health check
-app.get("/", (req, res) => {
-  res.json({
-    message: "ESG Dashboard Backend is running 🚀",
-  });
-});
-
-app.use("/api/environmental", environmentalRoutes);
-
-
-// Data Entry – Step 1 (Company Info)
-app.use("/api/company", companyRoutes);
-
-// ================================
-// Start Server
-// ================================
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
-
-// ================================
-// Export sequelize for models
-// ================================
-module.exports = sequelize;

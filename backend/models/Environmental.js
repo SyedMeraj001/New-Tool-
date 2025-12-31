@@ -1,6 +1,6 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../server");
-const Company = require("./Company");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
+import Company from "./Company.js";
 
 const Environmental = sequelize.define(
   "Environmental",
@@ -16,30 +16,17 @@ const Environmental = sequelize.define(
       allowNull: false,
     },
 
-    mine_tailings_tonnes: {
-      type: DataTypes.FLOAT,
-    },
-
-    water_discharge_m3: {
-      type: DataTypes.FLOAT,
-    },
-
-    land_rehabilitated_hectares: {
-      type: DataTypes.FLOAT,
-    },
+    mine_tailings_tonnes: DataTypes.FLOAT,
+    water_discharge_m3: DataTypes.FLOAT,
+    land_rehabilitated_hectares: DataTypes.FLOAT,
 
     biodiversity_impact_score: {
-      type: DataTypes.FLOAT, // 0–10
+      type: DataTypes.FLOAT,
       validate: { min: 0, max: 10 },
     },
 
-    ghg_scope1_tco2e: {
-      type: DataTypes.FLOAT,
-    },
-
-    energy_consumption_mwh: {
-      type: DataTypes.FLOAT,
-    },
+    ghg_scope1_tco2e: DataTypes.FLOAT,
+    energy_consumption_mwh: DataTypes.FLOAT,
   },
   {
     tableName: "environmental_data",
@@ -47,8 +34,8 @@ const Environmental = sequelize.define(
   }
 );
 
-// 🔗 Relationships
+// Associations
 Company.hasOne(Environmental, { foreignKey: "company_id" });
 Environmental.belongsTo(Company, { foreignKey: "company_id" });
 
-module.exports = Environmental;
+export default Environmental;

@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001/api';
+/*const API_BASE = 'http://localhost:3001/api';
 
 class APIService {
   static async request(endpoint, options = {}) {
@@ -101,6 +101,100 @@ class APIService {
   // Analytics Data
   static getAnalyticsData(userId) {
     return this.request(`/esg/analytics/${userId}`);
+  }
+}
+
+export default APIService;
+*/
+//const API_BASE = process.env.REACT_APP_API_URL + "/api";
+const API_BASE = process.env.REACT_APP_API_URL + "/api";
+
+class APIService {
+  static async request(endpoint, options = {}) {
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+        credentials: "include",
+        ...options,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "API Error");
+      return data;
+    } catch (error) {
+      console.warn("❌ API Error:", error.message);
+      throw error;
+    }
+  }
+
+  // =========================
+  // AUTH
+  // =========================
+  static login(payload) {
+    return this.request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // =========================
+  // COMPANY (STEP 1)
+  // =========================
+  static saveCompany(data) {
+    return this.request("/company", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+static getCompanyByYear(year) {
+  return this.request(`/company/year/${year}`);
+
+}
+
+
+  // =========================
+  // ENVIRONMENTAL (STEP 2)
+  // =========================
+  static saveEnvironmental(data) {
+    return this.request("/environmental", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  static getEnvironmental(companyId) {
+    return this.request(`/environmental/${companyId}`);
+  }
+
+  // =========================
+  // SOCIAL (STEP 3)
+  // =========================
+  static saveSocial(data) {
+    return this.request("/social", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  static getSocial(companyId) {
+    return this.request(`/social/${companyId}`);
+  }
+
+  // =========================
+  // GOVERNANCE (STEP 4)
+  // =========================
+  static saveGovernance(data) {
+    return this.request("/governance", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  static getGovernance(companyId) {
+    return this.request(`/governance/${companyId}`);
   }
 }
 

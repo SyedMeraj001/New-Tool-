@@ -1,63 +1,74 @@
-import pool from "../config/db.js";
+// backend/controllers/companyController.js (ESM)
 
-/* ==============================
-   CREATE / SAVE COMPANY INFO
-============================== */
-export const createCompany = async (req, res) => {
+import Company from "../models/Company.js";
+
+// SAVE / UPDATE COMPANY
+const saveCompany = async (req, res) => {
   try {
-    const {
-      company_name,
-      reporting_year,
-      sector,
-      region,
-      primary_framework,
-      assurance_level,
-    } = req.body;
+    const { reporting_year } = req.body;
 
-    const query = `
-      INSERT INTO companies
-      (company_name, reporting_year, sector, region, primary_framework, assurance_level)
-      VALUES ($1,$2,$3,$4,$5,$6)
-      RETURNING *
-    `;
+    const existing = await Company.findOne({
+      where: { reporting_year },
+    });
 
-    const values = [
-      company_name,
-      reporting_year,
-      sector,
-      region,
-      primary_framework,
-      assurance_level,
-    ];
+    let company;
 
-    const { rows } = await pool.query(query, values);
+    if (existing) {
+      company = await existing.update(req.body);
+    } else {
+      company = await Company.create(req.body);
+    }
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: "Company information saved",
-      data: rows[0],
+      message: "Company data saved successfully",
+      data: company,
     });
   } catch (error) {
-    console.error("Create company error:", error);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("Company save error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
-/* ==============================
-   GET COMPANY INFO (AUTO-FILL)
-============================== */
-export const getCompanyByYear = async (req, res) => {
+// ✅ GET ALL COMPANIES
+const getAllCompanies = async (req, res) => {
   try {
-    const { year } = req.params;
+    const companies = await Company.findAll({
+      order: [["createdAt", "DESC"]],
+    });
 
-    const { rows } = await pool.query(
-      "SELECT * FROM companies WHERE reporting_year = $1",
-      [year]
-    );
-
-    res.status(200).json({ success: true, data: rows[0] });
+    res.json({
+      success: true,
+      data: companies,
+    });
   } catch (error) {
-    console.error("Fetch company error:", error);
-    res.status(500).json({ success: false, error: "Server error" });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
+
+// GET COMPANY BY YEAR
+const getCompanyByYear = async (req, res) => {
+  try {
+    const company = await Company.findOne({
+      where: { reporting_year: req.params.year },
+    });
+
+    res.json({
+      success: true,
+      data: company,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+export { saveCompany, getCompanyByYear, getAllCompanies };

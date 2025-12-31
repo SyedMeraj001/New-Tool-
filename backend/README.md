@@ -903,3 +903,10 @@ Your React frontend can now connect to:
 Your backend is now production-ready! 🚀
 
 **The main mistake was having an incomplete database schema that was missing the users table, combined with code architecture issues that prevented the server from starting.** 🎯
+=======
+super admin credentials
+fullName: "Super Admin",
+    email: admin@esgenius.com
+    Password → Admin@123
+    role: "super_admin"
+>>>>>>> Stashed changes

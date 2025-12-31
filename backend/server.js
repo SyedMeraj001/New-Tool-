@@ -10,6 +10,14 @@ import cors from "cors";
 
 // ✅ IMPORT shared sequelize instance (must also be ESM)
 import sequelize from "./config/db.js";
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const { Sequelize } = require("sequelize");
+
+// Routes
+const authRoutes = require("./routes/auth");
 
 // ================================
 // App Init
@@ -19,14 +27,20 @@ const PORT = process.env.PORT || 5000;
 
 // ================================
 // Middleware
-// ================================
+// ==============================
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
   })
 );
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
+
 app.use(express.json());
+app.use(cookieParser());
 
 // ================================
 // Routes (ALL DEFAULT IMPORTS)
@@ -39,11 +53,36 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import submitRoutes from "./routes/submitRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 
-// Health Check
+// Health Checkconst sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: "postgres",
+    logging: false
+  }
+;
+
+// Test DB connection
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("✅ Database connected successfully");
+  } catch (error) {
+    console.error("❌ Database connection failed:", error.message);
+    process.exit(1);
+  }
+})();
+
+// ================================
+// Routes
+// ================================
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
-  res.json({
-    message: "ESG Dashboard Backend is running 🚀",
-  });
+  res.json({ message: "ESG Dashboard Backend is running 🚀" });
 });
 
 // ESG Steps
@@ -73,3 +112,4 @@ app.use("/api/upload", uploadRoutes);
     console.error("❌ Database error:", error.message);
   }
 })();
+module.exports = sequelize;

@@ -1,86 +1,110 @@
-// frontend/src/Login.jsx
-import { useState, useEffect } from 'react';
-import { useTheme } from './contexts/ThemeContext';
-import { useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaLeaf, FaUser } from 'react-icons/fa';
-import logo from './companyLogo.jpg';
-import TwoFactorAuth from './components/TwoFactorAuth';
-import APIService from "./services/apiService";
+import { useState } from "react";
+import { useTheme } from "./contexts/ThemeContext";
+import { useNavigate } from "react-router-dom";
+import {
+  FaEnvelope,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaLeaf,
+  FaUser
+} from "react-icons/fa";
+import logo from "./companyLogo.jpg";
+import TwoFactorAuth from "./components/TwoFactorAuth";
+
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [message, setMessage] = useState('');
+  const { isDark } = useTheme();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [signupRole, setSignupRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState("");
+  const [signupRole, setSignupRole] = useState("");
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
 
-
-  // Initialize preconfigured users on component mount
-
+  /* ================================
+     Handle Login / Register
+  ================================ */
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMessage("");
+    e.preventDefault();
+    setMessage("");
 
-  try {
-    /*const res = await fetch(
-      `${process.env.REACT_APP_API_URL}/api/auth/login`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // IMPORTANT
-        body: JSON.stringify({
-          email,
-          password,
-          role: selectedRole
-        })
-      }
-    );*/
-    const res = await fetch(
-  `${process.env.REACT_APP_API_URL}/api/auth/login`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({
-      email,
-      password,
-      role: selectedRole,
-    }),
-  }
-);
-
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setMessage(`❌ ${data.message}`);
+    if (!isSignup && !selectedRole) {
+      setMessage("❌ Please select a role");
       return;
     }
 
-    setMessage(`✅ Welcome ${data.user.fullName} (${data.user.role})`);
+    if (isSignup && password !== confirmPassword) {
+      setMessage("❌ Passwords do not match");
+      return;
+    }
 
-    setTimeout(() => navigate("/"), 800);
+    const url = isSignup
+      ? `${API}/api/auth/register`
+      : `${API}/api/auth/login`;
 
-  } catch (err) {
-    setMessage("❌ Server not reachable");
-  }
-};
+   const payload = isSignup
+  ? {
+      fullName,
+      email,
+      password,
+      role: signupRole,
+      contactNumber
+    }
 
-  const handle2FAVerify = (code) => {
-    setShow2FA(false);
-    completeLogin(pendingUser);
+      : {
+          email,
+          password,
+          role: selectedRole
+        };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(`❌ ${data.message || "Authentication failed"}`);
+        return;
+      }
+
+      /* Signup flow */
+      if (isSignup) {
+        setMessage("✅ Registered successfully. Awaiting admin approval.");
+        setIsSignup(false);
+        return;
+      }
+
+      /* Login success */
+      setMessage(`✅ Welcome ${data.user.fullName}`);
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 400);
+
+    } catch (err) {
+      setMessage("❌ Server not reachable");
+    }
   };
 
-
-
-  const { isDark } = useTheme();
-
+  const handle2FAVerify = () => {
+    setShow2FA(false);
+    navigate("/dashboard", { replace: true });
+  };
+  
   return (
     <div className={`min-h-screen flex items-center justify-center p-6 transition-all duration-500 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-[#e9edf2] via-[#f1f5f9] to-[#e2e8f0]'}`}>
       <div className="absolute inset-0 overflow-hidden">
@@ -275,6 +299,50 @@ const Login = () => {
                 className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
               />
               <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${email ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Email</label>
+             {/* Contact Number */}
+<div
+  className={`input-box animation relative w-full h-10  transition-all duration-700 ${
+    isSignup
+      ? "transform translate-x-0 opacity-100 blur-0"
+      : "transform translate-x-full opacity-0 blur-sm"
+  }`}
+>
+  <input
+    type="tel"
+    value={contactNumber}
+    onChange={(e) => setContactNumber(e.target.value)}
+    required={isSignup}
+    maxLength="10"
+    pattern="[0-9]{10}"
+    className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-8 transition-all duration-500 ${
+      isDark
+        ? "text-white border-white focus:border-[#3a7a44]"
+        : "text-gray-900 border-gray-900 focus:border-[#3a7a44]"
+    }`}
+  />
+
+  <label
+    className={`absolute left-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${
+      isDark ? "text-white" : "text-gray-900"
+    } ${contactNumber ? "top-[-5px] text-[#3a7a44]" : ""}`}
+  >
+    Contact Number
+  </label>
+
+  <span
+    className={`absolute right-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${
+      contactNumber
+        ? "text-[#3a7a44]"
+        : isDark
+        ? "text-white"
+        : "text-gray-900"
+    }`}
+  >
+    📞
+  </span>
+</div>
+
+
               <FaEnvelope className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${email ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
             </div>
 

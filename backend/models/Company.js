@@ -1,22 +1,43 @@
-cconst { DataTypes } = require("sequelize");
-const sequelize = require("../config/sequelize");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js"; // ESM import
 
-const Company = sequelize.define("Company", {
-  company_name: {
-    type: DataTypes.STRING,
-    allowNull: false,
+const Company = sequelize.define(
+  "Company",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    company_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    reporting_year: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    sector: {
+      type: DataTypes.STRING,
+    },
+    region: {
+      type: DataTypes.STRING,
+    },
+    primary_framework: {
+      type: DataTypes.STRING,
+    },
+    assurance_level: {
+      type: DataTypes.STRING,
+    },
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: "DRAFT",
+    },
   },
-  reporting_year: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  sector: DataTypes.STRING,
-  region: DataTypes.STRING,
-  primary_reporting_framework: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  assurance_level: DataTypes.STRING,
-});
+  {
+    tableName: "companies",
+    timestamps: true,
+  }
+);
 
-module.exports = Company;
+export default Company;

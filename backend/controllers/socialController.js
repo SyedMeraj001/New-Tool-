@@ -1,21 +1,21 @@
-import Environmental from "../models/Environmental.js";
+import Social from "../models/Social.js";
 
 // SAVE / UPDATE
-const saveEnvironmental = async (req, res) => {
+const saveSocial = async (req, res) => {
   try {
     const { company_id } = req.body;
 
-    const existing = await Environmental.findOne({
+    const existing = await Social.findOne({
       where: { company_id },
     });
 
     const data = existing
       ? await existing.update(req.body)
-      : await Environmental.create(req.body);
+      : await Social.create(req.body);
 
     res.json({
       success: true,
-      message: "Environmental data saved",
+      message: "Social data saved",
       data,
     });
   } catch (error) {
@@ -27,9 +27,9 @@ const saveEnvironmental = async (req, res) => {
 };
 
 // GET
-const getEnvironmental = async (req, res) => {
+const getSocial = async (req, res) => {
   try {
-    const data = await Environmental.findOne({
+    const data = await Social.findOne({
       where: { company_id: req.params.companyId },
     });
 
@@ -45,4 +45,4 @@ const getEnvironmental = async (req, res) => {
   }
 };
 
-export { saveEnvironmental, getEnvironmental };
+export { saveSocial, getSocial };

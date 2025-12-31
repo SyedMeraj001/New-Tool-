@@ -1,21 +1,21 @@
-import Environmental from "../models/Environmental.js";
+import Governance from "../models/Governance.js";
 
-// SAVE / UPDATE
-const saveEnvironmental = async (req, res) => {
+// SAVE / UPDATE GOVERNANCE
+const saveGovernance = async (req, res) => {
   try {
     const { company_id } = req.body;
 
-    const existing = await Environmental.findOne({
+    const existing = await Governance.findOne({
       where: { company_id },
     });
 
     const data = existing
       ? await existing.update(req.body)
-      : await Environmental.create(req.body);
+      : await Governance.create(req.body);
 
     res.json({
       success: true,
-      message: "Environmental data saved",
+      message: "Governance data saved",
       data,
     });
   } catch (error) {
@@ -26,10 +26,10 @@ const saveEnvironmental = async (req, res) => {
   }
 };
 
-// GET
-const getEnvironmental = async (req, res) => {
+// GET GOVERNANCE
+const getGovernance = async (req, res) => {
   try {
-    const data = await Environmental.findOne({
+    const data = await Governance.findOne({
       where: { company_id: req.params.companyId },
     });
 
@@ -45,4 +45,4 @@ const getEnvironmental = async (req, res) => {
   }
 };
 
-export { saveEnvironmental, getEnvironmental };
+export { saveGovernance, getGovernance };

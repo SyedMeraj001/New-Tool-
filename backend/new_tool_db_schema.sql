@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.9
--- Dumped by pg_dump version 16.9
+-- Dumped from database version 15.13
+-- Dumped by pg_dump version 15.13
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -30,11 +30,7 @@ CREATE TABLE public.companies (
     reporting_year integer NOT NULL,
     sector character varying(150),
     region character varying(150),
-    primary_reporting_framework character varying(255) NOT NULL,
-    assurance_level character varying(100),
-    created_by integer,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -53,7 +49,7 @@ CREATE SEQUENCE public.companies_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.companies_id_seq OWNER TO postgres;
+ALTER TABLE public.companies_id_seq OWNER TO postgres;
 
 --
 -- Name: companies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres

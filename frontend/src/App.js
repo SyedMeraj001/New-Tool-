@@ -8,9 +8,16 @@ import {
 
 import Login from "./Login";
 import Profile from "./Profile";
-
 import Dashboard from "./Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute"; // KEEP
+import DataEntry from "./DataEntry";
+import Reports from "./Reports";
+import Analytics from "./Analytics";
+import Compliance from "./Compliance";
+import Regulatory from "./Regulatory";
+import Stakeholders from "./Stakeholders";
+import AdminPanel from "./AdminPanel";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SectorProvider } from "./contexts/SectorContext";
 
@@ -19,30 +26,7 @@ import SectorDashboard from "./components/SectorDashboard";
 import EvidenceUploader from "./components/EvidenceUploader";
 import UserManagement from "./components/UserManagement";
 
-import {
-  LazyDashboard,
-  LazyDataEntry,
-  LazyIndustryStandardDataEntry,
-  LazyReports,
-  LazyAnalytics,
-  LazyCompliance,
-  LazyRegulatory,
-  LazyStakeholders,
-  LazyAdminPanel,
-  LazyMaterialityAssessment,
-  LazySupplyChainESG,
-  LazyWorkflowDashboard,
-  LazyIntegrationDashboard,
-  LazyCalculatorDashboard,
-  LazyComprehensiveESGDashboard,
-  LazyESGReportingDashboard,
-  LazyStakeholderSentimentDashboard,
-  LazyIoTDashboard,
-  LazyReportsAnalyticsDashboard,
-  LazyEnhancedFrameworkCompliance
-} from "./components/LazyComponents";
-
-import RBACProtectedRoute from "./components/ProtectedRoute"; // KEEP
+import RBACProtectedRoute from "./components/ProtectedRoute";
 import { PERMISSIONS } from "./utils/rbac";
 import { initializeSector } from "./utils/sectorInit";
 
@@ -109,25 +93,14 @@ const AppRoutes = () => (
       <Route path="/sectors" element={<CookieProtectedRoute><SectorSelector /></CookieProtectedRoute>} />
       <Route path="/sector/:sector" element={<CookieProtectedRoute><SectorDashboard /></CookieProtectedRoute>} />
 
-      <Route path="/data-entry" element={<CookieProtectedRoute><LazyDataEntry /></CookieProtectedRoute>} />
-      <Route path="/industry-standard-data-entry" element={<CookieProtectedRoute><LazyIndustryStandardDataEntry /></CookieProtectedRoute>} />
-      <Route path="/materiality-assessment" element={<CookieProtectedRoute><LazyMaterialityAssessment /></CookieProtectedRoute>} />
-      <Route path="/supply-chain" element={<CookieProtectedRoute><LazySupplyChainESG /></CookieProtectedRoute>} />
-      <Route path="/reports" element={<CookieProtectedRoute><LazyReports /></CookieProtectedRoute>} />
-      <Route path="/analytics" element={<CookieProtectedRoute><LazyAnalytics /></CookieProtectedRoute>} />
-      <Route path="/compliance" element={<CookieProtectedRoute><LazyCompliance /></CookieProtectedRoute>} />
-      <Route path="/stakeholders" element={<CookieProtectedRoute><LazyStakeholders /></CookieProtectedRoute>} />
-      <Route path="/regulatory" element={<CookieProtectedRoute><LazyRegulatory /></CookieProtectedRoute>} />
-      <Route path="/admin" element={<CookieProtectedRoute><LazyAdminPanel /></CookieProtectedRoute>} />
-      <Route path="/workflow" element={<CookieProtectedRoute><LazyWorkflowDashboard /></CookieProtectedRoute>} />
-      <Route path="/integrations" element={<CookieProtectedRoute><LazyIntegrationDashboard /></CookieProtectedRoute>} />
-      <Route path="/calculators" element={<CookieProtectedRoute><LazyCalculatorDashboard /></CookieProtectedRoute>} />
-      <Route path="/comprehensive-esg" element={<CookieProtectedRoute><LazyComprehensiveESGDashboard /></CookieProtectedRoute>} />
-      <Route path="/esg-reporting" element={<CookieProtectedRoute><LazyESGReportingDashboard /></CookieProtectedRoute>} />
-      <Route path="/stakeholder-sentiment" element={<CookieProtectedRoute><LazyStakeholderSentimentDashboard /></CookieProtectedRoute>} />
-      <Route path="/iot" element={<CookieProtectedRoute><LazyIoTDashboard /></CookieProtectedRoute>} />
-      <Route path="/reports-analytics" element={<CookieProtectedRoute><LazyReportsAnalyticsDashboard /></CookieProtectedRoute>} />
-      <Route path="/enhanced-framework-compliance" element={<CookieProtectedRoute><LazyEnhancedFrameworkCompliance /></CookieProtectedRoute>} />
+      <Route path="/data-entry" element={<CookieProtectedRoute><DataEntry /></CookieProtectedRoute>} />
+      <Route path="/reports" element={<CookieProtectedRoute><Reports /></CookieProtectedRoute>} />
+      <Route path="/analytics" element={<CookieProtectedRoute><Analytics /></CookieProtectedRoute>} />
+      <Route path="/compliance" element={<CookieProtectedRoute><Compliance /></CookieProtectedRoute>} />
+      <Route path="/stakeholders" element={<CookieProtectedRoute><Stakeholders /></CookieProtectedRoute>} />
+      <Route path="/regulatory" element={<CookieProtectedRoute><Regulatory /></CookieProtectedRoute>} />
+      <Route path="/admin" element={<CookieProtectedRoute><AdminPanel /></CookieProtectedRoute>} />
+      <Route path="/admin/dashboard" element={<CookieProtectedRoute><AdminPanel /></CookieProtectedRoute>} />
 
       {/* RBAC */}
       <Route

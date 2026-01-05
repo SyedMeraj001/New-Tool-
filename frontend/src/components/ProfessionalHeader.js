@@ -8,7 +8,7 @@ import TwoFactorSetup from './TwoFactorSetup';
 import EncryptionSetup from './EncryptionSetup';
 import SecureStorage from '../utils/secureStorage';
 
-const ProfessionalHeader = ({ onLogout, actions = [] }) => {
+const ProfessionalHeader = ({ onLogout, currentUser, actions = [] }) => {
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -24,13 +24,16 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
   const [showEncryptionSetup, setShowEncryptionSetup] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(localStorage.getItem('2fa_enabled') === 'true');
   const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(SecureStorage.isEncryptionEnabled());
-  const currentUser = localStorage.getItem('currentUser');
-  const [profilePic, setProfilePic] = useState(() => {
-    const userKey = `userProfilePic_${currentUser || 'default'}`;
-    return localStorage.getItem(userKey) || null;
-  });
-  const userRole = getUserRole();
-  const isAdmin = userRole === USER_ROLES.SUPER_ADMIN;
+  const [profilePic, setProfilePic] = useState(null);
+  const userRole = currentUser?.role || getUserRole();
+  const isAdmin = userRole === 'super_admin';
+
+  // Fetch profile photo from backend
+  useEffect(() => {
+    if (currentUser?.profilePhoto) {
+      setProfilePic(currentUser.profilePhoto);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const loadPendingUsers = () => {
@@ -119,17 +122,16 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     window.dispatchEvent(new CustomEvent('alertsCleared'));
   };
 
-  const handleProfilePicUpload = (event) => {
+  const handleProfilePicUpload = async (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          // Resize to max 100x100 to reduce storage size
           const maxSize = 100;
           let { width, height } = img;
           
@@ -152,11 +154,23 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
           
           try {
-            setProfilePic(compressedDataUrl);
-            const userKey = `userProfilePic_${currentUser || 'default'}`;
-            localStorage.setItem(userKey, compressedDataUrl);
+            const response = await fetch('http://localhost:5000/api/profile/photo', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ photoData: compressedDataUrl })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              setProfilePic(compressedDataUrl);
+              // Update currentUser if available
+              if (currentUser) {
+                currentUser.profilePhoto = compressedDataUrl;
+              }
+            }
           } catch (error) {
-            alert('Image too large. Please choose a smaller image.');
+            alert('Upload failed');
           }
         };
         img.src = e.target.result;
@@ -165,20 +179,32 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
     }
   };
 
-  const removeProfilePic = () => {
-    setProfilePic(null);
-    const userKey = `userProfilePic_${currentUser || 'default'}`;
-    localStorage.removeItem(userKey);
+  const removeProfilePic = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/profile/photo', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        setProfilePic(null);
+        if (currentUser) {
+          currentUser.profilePhoto = null;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to remove profile photo:', error);
+    }
   };
 
   const loadPendingApprovals = () => {
-    if (userRole === USER_ROLES.SUPERVISOR || userRole === USER_ROLES.SUPER_ADMIN) {
+    if (userRole === 'supervisor' || userRole === 'super_admin') {
       const workflows = JSON.parse(localStorage.getItem('approvalWorkflows') || '[]');
       const pending = workflows.filter(w => w.status === 'pending').length;
       
       // Also count signup requests for super admin
       let signupRequestsCount = 0;
-      if (userRole === USER_ROLES.SUPER_ADMIN) {
+      if (userRole === 'super_admin') {
         const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
         signupRequestsCount = signupRequests.filter(r => r.status === 'pending').length;
       }
@@ -411,7 +437,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                     
                     <div className="max-h-64 overflow-y-auto">
                       {/* Signup Requests for Super Admin */}
-                      {userRole === USER_ROLES.SUPER_ADMIN && (() => {
+                      {userRole === 'super_admin' && (() => {
                         const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
                         return signupRequests.filter(r => r.status === 'pending').map((request) => (
                           <div key={request.id} className={`p-3 border-b ${
@@ -451,7 +477,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                       })()}
                       
                       {/* Super Admin Panel Button */}
-                      {userRole === USER_ROLES.SUPER_ADMIN && (
+                      {userRole === 'super_admin' && (
                         <div className={`p-3 border-b cursor-pointer transition-colors ${
                           isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'
                         }`}
@@ -579,13 +605,13 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
                           </div>
                           <div className="flex-1">
                             <p className="font-semibold text-white text-base">
-                              {currentUser || 'User'}
+                              {currentUser?.fullName || 'User'}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-xs px-2 py-1 bg-white/20 rounded-full text-white font-medium">
-                                {userRole === USER_ROLES.SUPER_ADMIN ? 'Super Admin' :
-                                 userRole === USER_ROLES.SUPERVISOR ? 'Supervisor' :
-                                 userRole === USER_ROLES.DATA_ENTRY ? 'Data Entry' : 'User'}
+                                {userRole === 'super_admin' ? 'Super Admin' :
+                                 userRole === 'supervisor' ? 'Supervisor' :
+                                 userRole === 'data_entry' ? 'Data Entry' : 'User'}
                               </span>
                             </div>
                           </div>
@@ -827,7 +853,7 @@ const ProfessionalHeader = ({ onLogout, actions = [] }) => {
           <TwoFactorSetup
             onComplete={handle2FAComplete}
             onCancel={() => setShow2FASetup(false)}
-            userEmail={currentUser}
+            userEmail={currentUser?.email || ''}
           />
         </div>
       )}

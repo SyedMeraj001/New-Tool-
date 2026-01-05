@@ -120,6 +120,25 @@ const Compliance = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [dragActive, setDragActive] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -244,8 +263,7 @@ const Compliance = () => {
     }}>
       <ProfessionalHeader 
         onLogout={handleLogout}
-        isDark={isDark}
-        toggleTheme={toggleTheme}
+        currentUser={currentUser}
       />
 
       <main className="max-w-7xl mx-auto p-6">

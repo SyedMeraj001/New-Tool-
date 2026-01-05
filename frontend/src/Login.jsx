@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "./contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -31,6 +31,44 @@ const Login = () => {
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
 
+  // Clear any existing auth on component mount
+  useEffect(() => {
+    fetch(`${API}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include"
+    }).catch(() => {});
+  }, []);
+
+  /* ================================
+     Fetch user from DB & redirect
+  ================================ */
+  const fetchAndRedirect = async () => {
+    try {
+      const res = await fetch(`${API}/api/auth/me`, {
+        method: "GET",
+        credentials: "include" // Required for cookies
+      });
+
+      if (!res.ok) throw new Error("Not authenticated");
+
+      const data = await res.json();
+      const role = data.user.role;
+
+      console.log("🔍 Redirecting user:", data.user);
+
+      if (role === "super_admin") {
+        console.log("➡️ Redirecting to dashboard");
+        navigate("/dashboard", { replace: true });
+      } else {
+        console.log("➡️ Redirecting to regular dashboard");
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+      navigate("/login", { replace: true });
+    }
+  };
+
   /* ================================
      Handle Login / Register
   ================================ */
@@ -52,15 +90,14 @@ const Login = () => {
       ? `${API}/api/auth/register`
       : `${API}/api/auth/login`;
 
-   const payload = isSignup
-  ? {
-      fullName,
-      email,
-      password,
-      role: signupRole,
-      contactNumber
-    }
-
+    const payload = isSignup
+      ? {
+          fullName,
+          email,
+          password,
+          role: signupRole,
+          contactNumber
+        }
       : {
           email,
           password,
@@ -89,22 +126,23 @@ const Login = () => {
         return;
       }
 
-      /* Login success */
+      /* Login success → role-based redirect */
       setMessage(`✅ Welcome ${data.user.fullName}`);
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 400);
+      await fetchAndRedirect();
 
     } catch (err) {
+      console.error("Request error:", err);
       setMessage("❌ Server not reachable");
     }
   };
 
+  /* ================================
+     2FA Verify
+  ================================ */
   const handle2FAVerify = () => {
     setShow2FA(false);
-    navigate("/dashboard", { replace: true });
+    fetchAndRedirect();
   };
-  
   return (
     <div className={`min-h-screen flex items-center justify-center p-6 transition-all duration-500 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-[#e9edf2] via-[#f1f5f9] to-[#e2e8f0]'}`}>
       <div className="absolute inset-0 overflow-hidden">
@@ -145,7 +183,7 @@ const Login = () => {
             </div>
           </div>
           
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <div className={`input-box animation relative w-full h-12 mt-6 transition-all duration-700 ${!isSignup ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0'}`} style={{
               transitionDelay: !isSignup ? 'calc(0.1s * 22)' : 'calc(0.1s * 1)'
             }}>
@@ -257,7 +295,7 @@ const Login = () => {
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 18)' : 'calc(0.1s * 1)'
             }}>
@@ -299,14 +337,14 @@ const Login = () => {
                 className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
               />
               <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${email ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Email</label>
-             {/* Contact Number */}
-<div
-  className={`input-box animation relative w-full h-10  transition-all duration-700 ${
-    isSignup
-      ? "transform translate-x-0 opacity-100 blur-0"
-      : "transform translate-x-full opacity-0 blur-sm"
-  }`}
->
+             
+
+              <FaEnvelope className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${email ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
+            </div>
+
+                     <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+  transitionDelay: isSignup ? 'calc(0.1s * 19.2)' : 'calc(0.1s * 2.2)'
+}}>
   <input
     type="tel"
     value={contactNumber}
@@ -314,37 +352,15 @@ const Login = () => {
     required={isSignup}
     maxLength="10"
     pattern="[0-9]{10}"
-    className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-8 transition-all duration-500 ${
-      isDark
-        ? "text-white border-white focus:border-[#3a7a44]"
-        : "text-gray-900 border-gray-900 focus:border-[#3a7a44]"
-    }`}
+    className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-8 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
   />
-
-  <label
-    className={`absolute left-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${
-      isDark ? "text-white" : "text-gray-900"
-    } ${contactNumber ? "top-[-5px] text-[#3a7a44]" : ""}`}
-  >
+  <label className={`absolute left-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${contactNumber ? 'top-[-5px] text-[#3a7a44]' : ''}`}>
     Contact Number
   </label>
-
-  <span
-    className={`absolute right-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${
-      contactNumber
-        ? "text-[#3a7a44]"
-        : isDark
-        ? "text-white"
-        : "text-gray-900"
-    }`}
-  >
+  <span className={`absolute right-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${contactNumber ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`}>
     📞
   </span>
 </div>
-
-
-              <FaEnvelope className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${email ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
-            </div>
 
             <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 19)' : 'calc(0.1s * 3)'
@@ -365,6 +381,8 @@ const Login = () => {
                 {showPassword ? <FaEyeSlash /> : <FaLock />}
               </button>
             </div>
+
+   
 
             <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 19.5)' : 'calc(0.1s * 3.5)'

@@ -1,5 +1,7 @@
 ## Database Setup
-
+Email: admin@esgenius.com
+Password: Admin@123
+Role: super_admin
 After pulling latest code:
 
 ```bash

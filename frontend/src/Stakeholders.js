@@ -8,6 +8,7 @@ const Stakeholders = () => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const theme = getThemeClasses(isDark);
+  const [currentUser, setCurrentUser] = useState(null);
   const [selectedStakeholder, setSelectedStakeholder] = useState(null);
   const [animationClass, setAnimationClass] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -111,6 +112,27 @@ const Stakeholders = () => {
   ]);
 
   useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        navigate('/login');
+      }
+    };
+    fetchCurrentUser();
+  }, [navigate]);
+
+  useEffect(() => {
     setAnimationClass('animate-fade-in');
   }, []);
 
@@ -154,8 +176,7 @@ const Stakeholders = () => {
     }`}>
       <ProfessionalHeader 
         onLogout={handleLogout}
-        isDark={isDark}
-        toggleTheme={toggleTheme}
+        currentUser={currentUser}
       />
 
       <main className="max-w-7xl mx-auto p-6">
@@ -758,7 +779,7 @@ const Stakeholders = () => {
         </div>
       </main>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
           from {
             opacity: 0;

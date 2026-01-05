@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
 import { getStoredData, initializeStorage } from "./utils/storage";
 import esgAPI from "./api/esgAPI";
@@ -159,12 +159,10 @@ const dedupeEntries = (entries = []) => {
 };
 
 function Reports() {
+  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const theme = getThemeClasses(isDark);
-  const [currentUser] = useState({ 
-    role: localStorage.getItem('userRole') || 'esg_manager', 
-    id: localStorage.getItem('currentUser') || 'user_123' 
-  });
+  const [currentUser, setCurrentUser] = useState(null);
   const [data, setData] = useState([]);
   const [selectedReport, setSelectedReport] = useState("GRI Standards");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -204,6 +202,27 @@ function Reports() {
   const [sortBy, setSortBy] = useState('compliance');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedFrameworks, setSelectedFrameworks] = useState([]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        navigate('/login');
+      }
+    };
+    fetchCurrentUser();
+  }, [navigate]);
 
 
   // Clear all data from localStorage
@@ -1283,11 +1302,11 @@ function Reports() {
     return converted;
   };
 
-  const canViewReports = hasPermission(currentUser.role, PERMISSIONS.VIEW_REPORTS);
-  const canExportReports = hasPermission(currentUser.role, PERMISSIONS.EXPORT_REPORTS);
-  const canPrintReports = hasPermission(currentUser.role, PERMISSIONS.PRINT_REPORTS);
-  const canDownloadReports = hasPermission(currentUser.role, PERMISSIONS.DOWNLOAD_REPORTS);
-  const canDeleteData = hasPermission(currentUser.role, PERMISSIONS.DELETE_DATA);
+  const canViewReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.VIEW_REPORTS) : false;
+  const canExportReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.EXPORT_REPORTS) : false;
+  const canPrintReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.PRINT_REPORTS) : false;
+  const canDownloadReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.DOWNLOAD_REPORTS) : false;
+  const canDeleteData = currentUser ? hasPermission(currentUser.role, PERMISSIONS.DELETE_DATA) : false;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme.bg.gradient}`}>
@@ -1295,7 +1314,7 @@ function Reports() {
         onLogout={() => {
           window.location.href = "/login";
         }}
-        currentUser="admin@esgenius.com"
+        currentUser={currentUser}
         title="ESG Reports & Analytics"
         subtitle="Comprehensive ESG Performance Reporting"
         showBreadcrumb={true}

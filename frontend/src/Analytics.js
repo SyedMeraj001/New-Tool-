@@ -142,7 +142,7 @@ const Analytics = () => {
   const { isDark, toggleTheme } = useTheme();
   const theme = getThemeClasses(isDark);
   const navigate = useNavigate();
-  const [currentUser] = useState({ role: 'esg_manager', id: 'user_123' });
+  const [currentUser, setCurrentUser] = useState(null);
   const [data, setData] = useState([]);
   const [kpis, setKpis] = useState({});
   const [categoryData, setCategoryData] = useState({});
@@ -155,6 +155,27 @@ const Analytics = () => {
   const [selectedFramework, setSelectedFramework] = useState('GRI');
   const [refreshing, setRefreshing] = useState(false);
   const [miningCompliance, setMiningCompliance] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        navigate('/login');
+      }
+    };
+    fetchCurrentUser();
+  }, [navigate]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -537,7 +558,7 @@ const Analytics = () => {
     }`}>
       <ProfessionalHeader 
         onLogout={handleLogout}
-        currentUser="admin@esgenius.com"
+        currentUser={currentUser}
         title="Analytics Dashboard"
         subtitle="Advanced ESG Performance Insights & Trends"
         showBreadcrumb={true}

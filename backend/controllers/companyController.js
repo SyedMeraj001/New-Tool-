@@ -5,10 +5,13 @@ import Company from "../models/Company.js";
 // SAVE / UPDATE COMPANY
 const saveCompany = async (req, res) => {
   try {
-    const { reporting_year } = req.body;
+    const { company_name, reporting_year } = req.body;
 
     const existing = await Company.findOne({
-      where: { reporting_year },
+      where: { 
+        company_name,
+        reporting_year 
+      },
     });
 
     let company;
@@ -71,4 +74,32 @@ const getCompanyByYear = async (req, res) => {
   }
 };
 
-export { saveCompany, getCompanyByYear, getAllCompanies };
+// DELETE COMPANY
+const deleteCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const company = await Company.findByPk(id);
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        error: 'Company not found'
+      });
+    }
+    
+    await company.destroy();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Company deleted successfully'
+    });
+  } catch (error) {
+    console.error('Company delete error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export { saveCompany, getCompanyByYear, getAllCompanies, deleteCompany };

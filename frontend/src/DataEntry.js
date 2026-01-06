@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+
+//frontend/src/DataEntry.js
+>>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { debounce } from "lodash";
@@ -59,6 +64,7 @@ function DataEntry() {
       sector: "",
       region: "",
       reportingFramework: "GRI",
+      assuranceLevel: "None",
       siteId: null,
       siteName: ""
     },
@@ -254,6 +260,8 @@ function DataEntry() {
         sector: formData.companyInfo.sector,
         region: formData.companyInfo.region,
         reportingYear: formData.companyInfo.reportingYear,
+        framework: formData.companyInfo.reportingFramework,
+        assuranceLevel: formData.companyInfo.assuranceLevel || 'None',
         siteId: selectedSite?.id || null,
         siteName: selectedSite?.name || null,
         siteType: selectedSite?.type || null,
@@ -333,58 +341,68 @@ function DataEntry() {
         localStorage.setItem('recentAlerts', JSON.stringify(alerts));
       }
       try {
+        console.log('Attempting to save to database...');
+        
+        // Save to database via API
+        const companyResponse = await APIService.saveCompany({
+          company_name: submissionData.companyName,
+          sector: submissionData.sector,
+          region: submissionData.region,
+          reporting_year: submissionData.reportingYear,
+          primary_framework: submissionData.framework,
+          assurance_level: submissionData.assuranceLevel
+        });
+        
+        console.log('Company saved:', companyResponse);
+        const dbCompanyId = companyResponse.id;
+        
         // Save environmental data
-        if (formData.environmental.scope1Emissions) {
-          await ModuleAPI.saveModuleData('AirQualityData', companyId, {
-            locationId: 'main_facility',
-            pollutantType: 'CO2',
-            concentration: parseFloat(formData.environmental.scope1Emissions),
-            unit: 'tCO2e',
-            measurementDate: new Date(),
-            complianceStatus: 'compliant'
+        if (Object.values(formData.environmental).some(v => v !== '')) {
+          const envResponse = await APIService.saveEnvironmental({
+            company_id: dbCompanyId,
+            ...formData.environmental
           });
+          console.log('Environmental saved:', envResponse);
         }
         
         // Save social data
-        if (formData.social.totalEmployees) {
-          await ModuleAPI.saveWorkforceData(companyId, {
-            employeeId: `BULK_${Date.now()}`,
-            department: 'All Departments',
-            position: 'Various',
-            gender: 'mixed',
-            hireDate: new Date(),
-            trainingHours: parseFloat(formData.social.trainingHoursPerEmployee || 0),
-            isActive: true
+        if (Object.values(formData.social).some(v => v !== '')) {
+          const socialResponse = await APIService.saveSocial({
+            company_id: dbCompanyId,
+            ...formData.social
           });
+          console.log('Social saved:', socialResponse);
         }
         
         // Save governance data
-        if (formData.governance.boardSize) {
-          await ModuleAPI.saveModuleData('EthicsCompliance', companyId, {
-            policyType: 'board_governance',
-            complianceStatus: 'compliant',
-            auditScore: 85,
-            auditDate: new Date()
+        if (Object.values(formData.governance).some(v => v !== '')) {
+          const govResponse = await APIService.saveGovernance({
+            company_id: dbCompanyId,
+            ...formData.governance
           });
+          console.log('Governance saved:', govResponse);
         }
         
-        // Also save to localStorage for backward compatibility
+        console.log('All data saved to database successfully');
+        
+        // Also save to localStorage for UI compatibility
         const existing = JSON.parse(localStorage.getItem('esgData') || '[]');
         existing.push(submissionData);
         localStorage.setItem('esgData', JSON.stringify(existing));
-        localStorage.setItem('esg_last_submission', JSON.stringify(submissionData));
         
-        // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('esgDataUpdated', { detail: submissionData }));
-        
-        // Trigger storage event for workflow dashboard
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'esgData',
-          newValue: JSON.stringify(existing)
-        }));
       } catch (e) {
-        console.error('Failed to save data:', e);
-        throw new Error('Failed to save data');
+        console.error('Database save failed:', e);
+        console.error('Error details:', e.message);
+        
+<<<<<<< HEAD
+=======
+        // Still save to localStorage if database fails
+        const existing = JSON.parse(localStorage.getItem('esgData') || '[]');
+        existing.push(submissionData);
+        localStorage.setItem('esgData', JSON.stringify(existing));
+        
+        showToast('Data saved locally. Database connection failed.', 'warning');
       }
       
       setCompletedSteps(prev => new Set([...prev, 5]));
@@ -418,6 +436,7 @@ function DataEntry() {
         setUploadProgress(30);
         let jsonData;
         
+>>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
         if (file.name.endsWith('.json')) {
           jsonData = JSON.parse(event.target.result);
         } else {
@@ -484,10 +503,17 @@ function DataEntry() {
 
         setUploadProgress(90);
         // Save bulk data via API
+<<<<<<< HEAD
         const userId = currentUser?.email || currentUser?.id || 'unknown';
         
         // Save each formatted entry to database via ModuleAPI
         const companyId = userId;
+=======
+        const currentUser = 'admin@esgenius.com'; // Use consistent user ID
+        
+        // Save each formatted entry to database via ModuleAPI
+        const companyId = 'admin@esgenius.com';
+>>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
         Promise.all(formatted.map(async entry => {
           try {
             // Determine which module to save to based on category and metric

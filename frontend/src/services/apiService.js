@@ -196,6 +196,16 @@ static getCompanyByYear(year) {
   static getGovernance(companyId) {
     return this.request(`/governance/${companyId}`);
   }
+
+  // =========================
+  // ESG DATA (COMPLETE SUBMISSION)
+  // =========================
+  static saveESGData(data) {
+    return this.request("/esg/data", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export default APIService;

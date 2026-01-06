@@ -220,9 +220,6 @@ function DataEntry() {
       return newData;
     });
   };
-
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -528,7 +525,7 @@ function DataEntry() {
                   reportingPeriod: entry.reportingYear
                 });
               } else {
-                await ModuleAPI.saveModuleData('AirQualityData', companyId, {
+                await ModuleAPI.saveAirQualityData(companyId, {
                   locationId: 'main_facility',
                   pollutantType: entry.metric,
                   concentration: entry.value,
@@ -557,7 +554,9 @@ function DataEntry() {
                 });
               }
             } else if (entry.category === 'governance') {
-              await ModuleAPI.saveModuleData('EthicsCompliance', companyId, {
+              // Use governance endpoint for ethics compliance data
+              await APIService.saveGovernance({
+                company_id: companyId,
                 policyType: entry.metric,
                 complianceStatus: 'compliant',
                 auditScore: entry.value,
@@ -1943,17 +1942,6 @@ function DataEntry() {
               </div>
             </div>
           )}
-
-
-
-
-
-
-
-
-
-
-
           {/* Step Navigation Buttons */}
           <div className={`pt-8 flex justify-between items-center border-t ${theme.border.primary}`}>
             <div className="flex gap-3">

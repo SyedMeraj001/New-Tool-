@@ -1020,35 +1020,24 @@ function Reports() {
     showToast(details, 'info');
   };
 
-  const deleteItem = (displayIndex) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+  const deleteCompany = async (companyName) => {
+    if (!window.confirm(`Are you sure you want to delete all data for ${companyName}? This action cannot be undone.`)) return;
     
     try {
-      const filteredData = getFilteredAndSortedData();
-      const itemToDelete = filteredData[displayIndex];
+      // Remove from localStorage
+      const updatedData = data.filter(item => item.companyName !== companyName);
+      setData(updatedData);
+      localStorage.setItem('esgData', JSON.stringify(updatedData));
       
-      if (!itemToDelete || itemToDelete._originalIndex === undefined) {
-        showToast('Item not found', 'error');
-        return;
-      }
+      // Update aggregated data
+      const normalized = normalizeData(updatedData);
+      setYearlyData(aggregateByYear(normalized));
+      setOverallSummary(aggregateOverall(normalized));
       
-      // Use the stored original index to remove from data array
-      const newData = [...data];
-      newData.splice(itemToDelete._originalIndex, 1);
-      
-      // Update state
-      setData(newData);
-      
-      // Update localStorage
-      localStorage.setItem('esgData', JSON.stringify(newData));
-      
-      // Clear selections
-      setSelectedItems([]);
-      
-      showToast('Item deleted successfully', 'success');
+      showToast(`Company ${companyName} deleted successfully`, 'success');
     } catch (error) {
-      console.error('Delete error:', error);
-      showToast('Failed to delete item', 'error');
+      console.error('Delete company error:', error);
+      showToast('Failed to delete company', 'error');
     }
   };
 
@@ -2173,15 +2162,15 @@ function Reports() {
                           >
                             <span className="text-blue-600">👁️</span>
                           </button>
-                          {canDeleteData && (
-                            <button
-                              onClick={() => deleteItem(idx)}
-                              className={`p-2 rounded-lg transition-colors duration-200 ${theme.hover.subtle}`}
-                              title="Delete"
-                            >
-                              <span className="text-red-600">🗑️</span>
-                            </button>
-                          )}
+                    {canDeleteData && (
+                      <button
+                        onClick={() => deleteCompany(item.companyName)}
+                        className={`p-2 rounded-lg transition-colors duration-200 ${theme.hover.subtle}`}
+                        title="Delete Company"
+                      >
+                        <span className="text-red-600">🗑️</span>
+                      </button>
+                    )}
                         </div>
                       </td>
                     </tr>

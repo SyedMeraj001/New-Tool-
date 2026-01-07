@@ -33,6 +33,14 @@ const Login = () => {
 
   // Clear any existing auth on component mount
   useEffect(() => {
+    // Clear localStorage
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userFullName');
+    localStorage.removeItem('userId');
+    
+    // Clear server-side cookie
     fetch(`${API}/api/auth/logout`, {
       method: "POST",
       credentials: "include"
@@ -128,6 +136,14 @@ const Login = () => {
 
       /* Login success → role-based redirect */
       setMessage(`✅ Welcome ${data.user.fullName}`);
+      
+      // Set localStorage for RBAC compatibility
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('currentUser', data.user.email);
+      localStorage.setItem('userRole', data.user.role);
+      localStorage.setItem('userFullName', data.user.fullName);
+      localStorage.setItem('userId', data.user.id);
+      
       await fetchAndRedirect();
 
     } catch (err) {

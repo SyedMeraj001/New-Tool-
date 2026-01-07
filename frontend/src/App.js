@@ -53,7 +53,8 @@ const CookieProtectedRoute = ({ children }) => {
     })
       .then(res => res.json())
       .then(data => {
-        setAuth(data.authenticated === true);
+        // Check for success: true (from our JWT auth) or authenticated: true
+        setAuth(data.success === true || data.authenticated === true);
         setLoading(false);
       })
       .catch(() => {
@@ -62,7 +63,7 @@ const CookieProtectedRoute = ({ children }) => {
       });
   }, []);
 
-  if (loading) return null;
+  if (loading) return <LoadingSpinner />;
 
   return auth ? children : <Navigate to="/login" replace />;
 };

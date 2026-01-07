@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-=======
-
 //frontend/src/DataEntry.js
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { debounce } from "lodash";

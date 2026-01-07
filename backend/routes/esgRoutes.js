@@ -1,9 +1,9 @@
-﻿// routes/esgRoutes.js - ESG Data API
-const express = require("express");
-const router = express.Router();
-const { sequelize } = require("../models");
+﻿// routes/esgRoutes.js - ESG Data API (ES Modules)
+import express from 'express';
+import { sequelize } from '../models/index.js';
 
-// Get all ESG data
+const router = express.Router();
+
 router.get("/data", async (req, res) => {
   try {
     const [results] = await sequelize.query(`SELECT * FROM esg_data ORDER BY created_at DESC`);
@@ -13,7 +13,6 @@ router.get("/data", async (req, res) => {
   }
 });
 
-// Get ESG data by user
 router.get("/data/:userId", async (req, res) => {
   try {
     const [results] = await sequelize.query(`SELECT * FROM esg_data ORDER BY created_at DESC`);
@@ -23,7 +22,6 @@ router.get("/data/:userId", async (req, res) => {
   }
 });
 
-// Get ESG scores by user
 router.get("/scores/:userId", async (req, res) => {
   try {
     const [envData] = await sequelize.query(`SELECT AVG(CAST(metric_value AS DECIMAL)) as score FROM esg_data WHERE category = 'environmental'`);
@@ -41,7 +39,6 @@ router.get("/scores/:userId", async (req, res) => {
   }
 });
 
-// Get ESG KPIs by user
 router.get("/kpis/:userId", async (req, res) => {
   try {
     const [countData] = await sequelize.query(`SELECT COUNT(*) as total FROM esg_data`);
@@ -70,7 +67,6 @@ router.get("/kpis/:userId", async (req, res) => {
   }
 });
 
-// Get analytics by user
 router.get("/analytics/:userId", async (req, res) => {
   try {
     const [data] = await sequelize.query(`SELECT * FROM esg_data ORDER BY created_at DESC`);
@@ -91,7 +87,6 @@ router.get("/analytics/:userId", async (req, res) => {
   }
 });
 
-// Create ESG data entry
 router.post("/data", async (req, res) => {
   try {
     const { company_id, user_id, reporting_year, category, metric_name, metric_value, unit, framework_code } = req.body;
@@ -106,4 +101,4 @@ router.post("/data", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

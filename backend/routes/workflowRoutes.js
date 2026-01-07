@@ -1,12 +1,9 @@
-// ================================
-// routes/workflowRoutes.js
-// ================================
+﻿// routes/workflowRoutes.js (ES Modules)
+import express from 'express';
+import * as workflowService from '../services/workflowService.js';
 
-const express = require('express');
 const router = express.Router();
-const workflowService = require('../services/workflowService');
 
-// Get all workflows
 router.get('/', async (req, res) => {
   try {
     const { status, submittedBy } = req.query;
@@ -17,7 +14,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get workflow by ID
 router.get('/:id', async (req, res) => {
   try {
     const workflow = await workflowService.getWorkflowById(req.params.id);
@@ -28,7 +24,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create new workflow
 router.post('/', async (req, res) => {
   try {
     const { title, submittedBy, esgDataId, metadata } = req.body;
@@ -39,7 +34,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Approve workflow step
 router.post('/:id/approve', async (req, res) => {
   try {
     const { level, approver, comments } = req.body;
@@ -50,7 +44,6 @@ router.post('/:id/approve', async (req, res) => {
   }
 });
 
-// Reject workflow step
 router.post('/:id/reject', async (req, res) => {
   try {
     const { level, approver, reason } = req.body;
@@ -61,7 +54,6 @@ router.post('/:id/reject', async (req, res) => {
   }
 });
 
-// Get audit logs
 router.get('/audit/logs', async (req, res) => {
   try {
     const { userId, category, limit } = req.query;
@@ -72,7 +64,6 @@ router.get('/audit/logs', async (req, res) => {
   }
 });
 
-// Get notifications
 router.get('/notifications/:userId', async (req, res) => {
   try {
     const { unreadOnly } = req.query;
@@ -83,7 +74,6 @@ router.get('/notifications/:userId', async (req, res) => {
   }
 });
 
-// Mark notification as read
 router.patch('/notifications/:id/read', async (req, res) => {
   try {
     const notification = await workflowService.markNotificationRead(req.params.id);
@@ -93,4 +83,4 @@ router.patch('/notifications/:id/read', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

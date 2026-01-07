@@ -1,31 +1,70 @@
 // routes/authRoutes.js - Authentication API (ES Modules)
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { sequelize } from '../models/index.js';
 
 const router = express.Router();
 
-// POST /api/auth/login - User login
+const JWT_SECRET = process.env.JWT_SECRET || 'esg-genius-super-secret-key';
+const JWT_EXPIRES = '24h';
+
+// POST /api/auth/login - User login with JWT
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, error: 'Email and password are required' });
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
+    // Query user from database
     const [users] = await sequelize.query(
-      'SELECT id, email, full_name, role FROM users WHERE email = $1 AND password = $2 AND is_active = true',
+      'SELECT id, email, full_name, role, is_active FROM users WHERE email = $1 AND password = $2',
       { bind: [email, password] }
     );
 
     if (users.length === 0) {
-      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
     const user = users[0];
+
+    // Check if user is active
+    if (!user.is_active) {
+      return res.status(403).json({ success: false, message: 'Account is pending approval or deactivated' });
+    }
+
+    // Verify role matches (if provided)
+    if (role && user.role !== role) {
+      return res.status(401).json({ success: false, message: `Invalid role. You are registered as ${user.role}` });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role,
+        fullName: user.full_name 
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES }
+    );
+
+    // Set HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    console.log(`✅ Login successful: ${user.email} (${user.role})`);
+
     res.json({
       success: true,
-      data: {
+      message: 'Login successful',
+      user: {
         id: user.id,
         email: user.email,
         fullName: user.full_name,
@@ -33,8 +72,53 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
+});
+
+// GET /api/auth/me - Get current user from JWT
+router.get('/me', async (req, res) => {
+  try {
+    const token = req.cookies?.token;
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Fetch fresh user data
+    const [users] = await sequelize.query(
+      'SELECT id, email, full_name, role, is_active FROM users WHERE id = $1',
+      { bind: [decoded.id] }
+    );
+
+    if (users.length === 0 || !users[0].is_active) {
+      res.clearCookie('token');
+      return res.status(401).json({ success: false, message: 'User not found or inactive' });
+    }
+
+    const user = users[0];
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.clearCookie('token');
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+  }
+});
+
+// POST /api/auth/logout - Logout user
+router.post('/logout', (_req, res) => {
+  res.clearCookie('token');
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // GET /api/auth/users - Get all users (admin only)

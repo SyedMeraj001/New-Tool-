@@ -1,14 +1,29 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../server");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
 const Kpi = sequelize.define("Kpi", {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  name: { type: DataTypes.STRING },
-  value: { type: DataTypes.NUMERIC },
-  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  value: {
+    type: DataTypes.FLOAT,
+    allowNull: true
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
 }, {
   tableName: "kpis",
-  timestamps: false,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
-module.exports = Kpi;
+export default Kpi;

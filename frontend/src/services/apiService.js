@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const API_BASE = 'http://localhost:5000/api';
 
 class APIService {
@@ -118,6 +117,13 @@ class APIService {
   }
 
   // =========================
+  // DASHBOARD SUMMARY (Sudha)
+  // =========================
+  static getDashboardSummary() {
+    return this.request('/reports/dashboard-summary');
+  }
+
+  // =========================
   // ERP Integration
   // =========================
   static configureERP(config) {
@@ -171,33 +177,33 @@ class APIService {
       body: JSON.stringify(data)
     });
   }
+
+  // =========================
+  // STAKEHOLDERS (Sudha)
+  // =========================
+  static getStakeholders() {
+    return this.request('/stakeholders');
+  }
+
+  static createStakeholder(data) {
+    return this.request('/stakeholders', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  static updateStakeholder(id, data) {
+    return this.request(`/stakeholders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  static deleteStakeholder(id) {
+    return this.request(`/stakeholders/${id}`, {
+      method: 'DELETE'
+    });
+  }
 }
 
 export default APIService;
-=======
-const API_BASE_URL = 'http://localhost:5000/api';
-
-const apiService = {
-  getESGKPIs: async (email) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/kpi/${email}`);
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching KPIs:', error);
-      return { success: false, error: error.message };
-    }
-  },
-
-  getDashboardSummary: async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/reports/dashboard-summary`);
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching dashboard summary:', error);
-      return { success: false, error: error.message };
-    }
-  }
-};
-
-export default apiService;
->>>>>>> 44521cd (updated by sudha)

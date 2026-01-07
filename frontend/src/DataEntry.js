@@ -388,8 +388,6 @@ function DataEntry() {
         console.error('Database save failed:', e);
         console.error('Error details:', e.message);
         
-<<<<<<< HEAD
-=======
         // Still save to localStorage if database fails
         const existing = JSON.parse(localStorage.getItem('esgData') || '[]');
         existing.push(submissionData);
@@ -429,7 +427,6 @@ function DataEntry() {
         setUploadProgress(30);
         let jsonData;
         
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
         if (file.name.endsWith('.json')) {
           jsonData = JSON.parse(event.target.result);
         } else {
@@ -496,17 +493,10 @@ function DataEntry() {
 
         setUploadProgress(90);
         // Save bulk data via API
-<<<<<<< HEAD
         const userId = currentUser?.email || currentUser?.id || 'unknown';
         
         // Save each formatted entry to database via ModuleAPI
         const companyId = userId;
-=======
-        const currentUser = 'admin@esgenius.com'; // Use consistent user ID
-        
-        // Save each formatted entry to database via ModuleAPI
-        const companyId = 'admin@esgenius.com';
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
         Promise.all(formatted.map(async entry => {
           try {
             // Determine which module to save to based on category and metric

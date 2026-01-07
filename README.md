@@ -532,15 +532,102 @@ DB_PASSWORD=your-db-password
 
 ## 👤 User Accounts
 
-### Pre-configured Test Accounts
+### Pre-configured Test Accounts (48 Total)
 
-| Role | Email | Password | Count |
-|------|-------|----------|-------|
-| **Super Admin** | `superadmin1@esgenius.com` | `Admin@2025` | 3 |
-| **Supervisor** | `supervisor1@esgenius.com` | `Super@2025` | 15 |
-| **Data Entry** | `dataentry1@esgenius.com` | `Data@2025` | 30 |
+#### 🔴 Super Admin Accounts (3)
 
-**Total: 48 users**
+| # | Email | Password | Full Name |
+|---|-------|----------|-----------|
+| 1 | `superadmin1@esgenius.com` | `Admin@2025` | Super Admin 1 |
+| 2 | `superadmin2@esgenius.com` | `Admin@2025` | Super Admin 2 |
+| 3 | `superadmin3@esgenius.com` | `Admin@2025` | Super Admin 3 |
+
+#### 🔵 Supervisor Accounts (15)
+
+| # | Email | Password | Full Name |
+|---|-------|----------|-----------|
+| 1 | `supervisor1@esgenius.com` | `Super@2025` | Supervisor 1 |
+| 2 | `supervisor2@esgenius.com` | `Super@2025` | Supervisor 2 |
+| 3 | `supervisor3@esgenius.com` | `Super@2025` | Supervisor 3 |
+| 4 | `supervisor4@esgenius.com` | `Super@2025` | Supervisor 4 |
+| 5 | `supervisor5@esgenius.com` | `Super@2025` | Supervisor 5 |
+| 6 | `supervisor6@esgenius.com` | `Super@2025` | Supervisor 6 |
+| 7 | `supervisor7@esgenius.com` | `Super@2025` | Supervisor 7 |
+| 8 | `supervisor8@esgenius.com` | `Super@2025` | Supervisor 8 |
+| 9 | `supervisor9@esgenius.com` | `Super@2025` | Supervisor 9 |
+| 10 | `supervisor10@esgenius.com` | `Super@2025` | Supervisor 10 |
+| 11 | `supervisor11@esgenius.com` | `Super@2025` | Supervisor 11 |
+| 12 | `supervisor12@esgenius.com` | `Super@2025` | Supervisor 12 |
+| 13 | `supervisor13@esgenius.com` | `Super@2025` | Supervisor 13 |
+| 14 | `supervisor14@esgenius.com` | `Super@2025` | Supervisor 14 |
+| 15 | `supervisor15@esgenius.com` | `Super@2025` | Supervisor 15 |
+
+#### 🟢 Data Entry Accounts (30)
+
+| # | Email | Password | Full Name |
+|---|-------|----------|-----------|
+| 1 | `dataentry1@esgenius.com` | `Data@2025` | Data Entry User 1 |
+| 2 | `dataentry2@esgenius.com` | `Data@2025` | Data Entry User 2 |
+| 3 | `dataentry3@esgenius.com` | `Data@2025` | Data Entry User 3 |
+| 4 | `dataentry4@esgenius.com` | `Data@2025` | Data Entry User 4 |
+| 5 | `dataentry5@esgenius.com` | `Data@2025` | Data Entry User 5 |
+| 6 | `dataentry6@esgenius.com` | `Data@2025` | Data Entry User 6 |
+| 7 | `dataentry7@esgenius.com` | `Data@2025` | Data Entry User 7 |
+| 8 | `dataentry8@esgenius.com` | `Data@2025` | Data Entry User 8 |
+| 9 | `dataentry9@esgenius.com` | `Data@2025` | Data Entry User 9 |
+| 10 | `dataentry10@esgenius.com` | `Data@2025` | Data Entry User 10 |
+| 11 | `dataentry11@esgenius.com` | `Data@2025` | Data Entry User 11 |
+| 12 | `dataentry12@esgenius.com` | `Data@2025` | Data Entry User 12 |
+| 13 | `dataentry13@esgenius.com` | `Data@2025` | Data Entry User 13 |
+| 14 | `dataentry14@esgenius.com` | `Data@2025` | Data Entry User 14 |
+| 15 | `dataentry15@esgenius.com` | `Data@2025` | Data Entry User 15 |
+| 16 | `dataentry16@esgenius.com` | `Data@2025` | Data Entry User 16 |
+| 17 | `dataentry17@esgenius.com` | `Data@2025` | Data Entry User 17 |
+| 18 | `dataentry18@esgenius.com` | `Data@2025` | Data Entry User 18 |
+| 19 | `dataentry19@esgenius.com` | `Data@2025` | Data Entry User 19 |
+| 20 | `dataentry20@esgenius.com` | `Data@2025` | Data Entry User 20 |
+| 21 | `dataentry21@esgenius.com` | `Data@2025` | Data Entry User 21 |
+| 22 | `dataentry22@esgenius.com` | `Data@2025` | Data Entry User 22 |
+| 23 | `dataentry23@esgenius.com` | `Data@2025` | Data Entry User 23 |
+| 24 | `dataentry24@esgenius.com` | `Data@2025` | Data Entry User 24 |
+| 25 | `dataentry25@esgenius.com` | `Data@2025` | Data Entry User 25 |
+| 26 | `dataentry26@esgenius.com` | `Data@2025` | Data Entry User 26 |
+| 27 | `dataentry27@esgenius.com` | `Data@2025` | Data Entry User 27 |
+| 28 | `dataentry28@esgenius.com` | `Data@2025` | Data Entry User 28 |
+| 29 | `dataentry29@esgenius.com` | `Data@2025` | Data Entry User 29 |
+| 30 | `dataentry30@esgenius.com` | `Data@2025` | Data Entry User 30 |
+
+### Quick Login Reference
+
+| Role | Email Pattern | Password |
+|------|---------------|----------|
+| 🔴 Super Admin | `superadmin[1-3]@esgenius.com` | `Admin@2025` |
+| 🔵 Supervisor | `supervisor[1-15]@esgenius.com` | `Super@2025` |
+| 🟢 Data Entry | `dataentry[1-30]@esgenius.com` | `Data@2025` |
+
+### Login Steps
+
+1. Open `http://localhost:3000`
+2. Enter email (e.g., `superadmin1@esgenius.com`)
+3. Enter password (e.g., `Admin@2025`)
+4. Select role from dropdown (must match account role)
+5. Click **Login**
+
+### pgAdmin Login Query
+
+```sql
+-- View all users with passwords (hashed)
+SELECT id, email, full_name, role, is_active, created_at 
+FROM users 
+ORDER BY role, id;
+
+-- Count users by role
+SELECT role, COUNT(*) as count 
+FROM users 
+GROUP BY role;
+```
+
+**Total: 48 users** (3 Super Admin + 15 Supervisor + 30 Data Entry)
 
 ### Role Permissions
 

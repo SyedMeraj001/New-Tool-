@@ -1,131 +1,148 @@
-import { useState, useEffect } from 'react';
-import { useTheme } from './contexts/ThemeContext';
-import { useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaLeaf, FaUser } from 'react-icons/fa';
-import logo from './companyLogo.jpg';
-import { authenticateUser, initializePreconfiguredUsers, getRoleDisplayName } from './utils/rbac';
-import TwoFactorAuth from './components/TwoFactorAuth';
+import { useState, useEffect } from "react";
+import { useTheme } from "./contexts/ThemeContext";
+import { useNavigate } from "react-router-dom";
+import {
+  FaEnvelope,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaLeaf,
+  FaUser
+} from "react-icons/fa";
+import logo from "./companyLogo.jpg";
+import TwoFactorAuth from "./components/TwoFactorAuth";
+
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [message, setMessage] = useState('');
+  const { isDark } = useTheme();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [signupRole, setSignupRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState("");
+  const [signupRole, setSignupRole] = useState("");
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
 
-
-  // Initialize preconfigured users on component mount
+  // Clear any existing auth on component mount
   useEffect(() => {
-    initializePreconfiguredUsers();
+    fetch(`${API}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include"
+    }).catch(() => {});
   }, []);
 
+  /* ================================
+     Fetch user from DB & redirect
+  ================================ */
+  const fetchAndRedirect = async () => {
+    try {
+      const res = await fetch(`${API}/api/auth/me`, {
+        method: "GET",
+        credentials: "include" // Required for cookies
+      });
+
+      if (!res.ok) throw new Error("Not authenticated");
+
+      const data = await res.json();
+      const role = data.user.role;
+
+      console.log("🔍 Redirecting user:", data.user);
+
+      if (role === "super_admin") {
+        console.log("➡️ Redirecting to dashboard");
+        navigate("/dashboard", { replace: true });
+      } else {
+        console.log("➡️ Redirecting to regular dashboard");
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+      navigate("/login", { replace: true });
+    }
+  };
+
+  /* ================================
+     Handle Login / Register
+  ================================ */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (isSignup) {
-      if (password !== confirmPassword) {
-        setMessage('Passwords do not match');
-        return;
-      }
-      if (!signupRole) {
-        setMessage('Please select a role');
-        return;
-      }
-      try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3004'}/api/auth/signup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, fullName, role: signupRole })
-        });
-        
-        const data = await response.json();
-        setMessage(data.message || 'Account request submitted! Awaiting admin approval.');
-      } catch (error) {
-        // Store signup request for super admin approval
-        const signupRequests = JSON.parse(localStorage.getItem('signupRequests') || '[]');
-        const newRequest = {
-          id: Date.now(),
-          email,
-          password,
-          fullName,
-          role: signupRole,
-          requestDate: new Date().toISOString(),
-          status: 'pending'
-        };
-        signupRequests.push(newRequest);
-        localStorage.setItem('signupRequests', JSON.stringify(signupRequests));
-        
-        // Add notification for super admin
-        const notifications = JSON.parse(localStorage.getItem('superAdminNotifications') || '[]');
-        notifications.push({
-          id: Date.now(),
-          type: 'signup_request',
-          message: `New signup request from ${fullName} (${email}) for ${signupRole} role`,
-          timestamp: new Date().toISOString(),
-          read: false,
-          requestId: newRequest.id
-        });
-        localStorage.setItem('superAdminNotifications', JSON.stringify(notifications));
-        
-        setMessage('Account request submitted! Awaiting super admin approval.');
-      }
-      setIsSignup(false);
+    setMessage("");
+
+    if (!isSignup && !selectedRole) {
+      setMessage("❌ Please select a role");
       return;
     }
-    
-    // Authenticate user with RBAC system
-    const user = authenticateUser(email, password);
-    
-    if (user) {
-      // If role is selected, validate that user's role matches selected role
-      if (selectedRole && user.role !== selectedRole) {
-        setMessage('❌ Invalid credentials for the selected role. Please check your role selection.');
+
+    if (isSignup && password !== confirmPassword) {
+      setMessage("❌ Passwords do not match");
+      return;
+    }
+
+    const url = isSignup
+      ? `${API}/api/auth/register`
+      : `${API}/api/auth/login`;
+
+    const payload = isSignup
+      ? {
+          fullName,
+          email,
+          password,
+          role: signupRole,
+          contactNumber
+        }
+      : {
+          email,
+          password,
+          role: selectedRole
+        };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(`❌ ${data.message || "Authentication failed"}`);
         return;
       }
-      
-      // Check if 2FA is enabled
-      const is2FAEnabled = localStorage.getItem('2fa_enabled') === 'true';
-      
-      if (is2FAEnabled) {
-        setPendingUser(user);
-        setShow2FA(true);
-      } else {
-        completeLogin(user);
+
+      /* Signup flow */
+      if (isSignup) {
+        setMessage("✅ Registered successfully. Awaiting admin approval.");
+        setIsSignup(false);
+        return;
       }
-    } else {
-      setMessage('❌ Invalid email or password. Please try again.');
+
+      /* Login success → role-based redirect */
+      setMessage(`✅ Welcome ${data.user.fullName}`);
+      await fetchAndRedirect();
+
+    } catch (err) {
+      console.error("Request error:", err);
+      setMessage("❌ Server not reachable");
     }
   };
 
-  const completeLogin = (user) => {
-    localStorage.setItem('currentUser', user.email);
-    localStorage.setItem('userRole', user.role);
-    localStorage.setItem('userFullName', user.fullName);
-    localStorage.setItem('isLoggedIn', 'true');
-    
-    setMessage(`✅ Login successful! Welcome ${user.fullName} (${getRoleDisplayName(user.role)})`);
-    
-    setTimeout(() => {
-      navigate('/');
-    }, 1000);
-  };
-
-  const handle2FAVerify = (code) => {
+  /* ================================
+     2FA Verify
+  ================================ */
+  const handle2FAVerify = () => {
     setShow2FA(false);
-    completeLogin(pendingUser);
+    fetchAndRedirect();
   };
-
-
-
-  const { isDark } = useTheme();
-
   return (
     <div className={`min-h-screen flex items-center justify-center p-6 transition-all duration-500 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-[#e9edf2] via-[#f1f5f9] to-[#e2e8f0]'}`}>
       <div className="absolute inset-0 overflow-hidden">
@@ -166,7 +183,7 @@ const Login = () => {
             </div>
           </div>
           
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <div className={`input-box animation relative w-full h-12 mt-6 transition-all duration-700 ${!isSignup ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0'}`} style={{
               transitionDelay: !isSignup ? 'calc(0.1s * 22)' : 'calc(0.1s * 1)'
             }}>
@@ -278,7 +295,7 @@ const Login = () => {
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 18)' : 'calc(0.1s * 1)'
             }}>
@@ -320,8 +337,30 @@ const Login = () => {
                 className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-6 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
               />
               <label className={`absolute top-1/2 left-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${email ? 'top-[-5px] text-[#3a7a44]' : ''}`}>Email</label>
+             
+
               <FaEnvelope className={`absolute top-1/2 right-0 transform -translate-y-1/2 text-sm transition-all duration-500 ${email ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`} />
             </div>
+
+                     <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
+  transitionDelay: isSignup ? 'calc(0.1s * 19.2)' : 'calc(0.1s * 2.2)'
+}}>
+  <input
+    type="tel"
+    value={contactNumber}
+    onChange={(e) => setContactNumber(e.target.value)}
+    required={isSignup}
+    maxLength="10"
+    pattern="[0-9]{10}"
+    className={`w-full h-full bg-transparent border-none outline-none text-sm font-semibold border-b-2 pr-8 transition-all duration-500 ${isDark ? 'text-white border-white focus:border-[#3a7a44]' : 'text-gray-900 border-gray-900 focus:border-[#3a7a44]'}`}
+  />
+  <label className={`absolute left-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${isDark ? 'text-white' : 'text-gray-900'} ${contactNumber ? 'top-[-5px] text-[#3a7a44]' : ''}`}>
+    Contact Number
+  </label>
+  <span className={`absolute right-0 top-1/2 -translate-y-1/2 text-sm transition-all duration-500 ${contactNumber ? 'text-[#3a7a44]' : isDark ? 'text-white' : 'text-gray-900'}`}>
+    📞
+  </span>
+</div>
 
             <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 19)' : 'calc(0.1s * 3)'
@@ -342,6 +381,8 @@ const Login = () => {
                 {showPassword ? <FaEyeSlash /> : <FaLock />}
               </button>
             </div>
+
+   
 
             <div className={`input-box animation relative w-full h-10 transition-all duration-700 ${isSignup ? 'transform translate-x-0 opacity-100 blur-0' : 'transform translate-x-full opacity-0 blur-sm'}`} style={{
               transitionDelay: isSignup ? 'calc(0.1s * 19.5)' : 'calc(0.1s * 3.5)'

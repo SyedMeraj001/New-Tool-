@@ -1,130 +1,149 @@
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
-  useLocation
+  Navigate
 } from "react-router-dom";
 
-import Login from "./Login.jsx";
+import Login from "./Login";
 import Profile from "./Profile";
-import { ThemeProvider } from './contexts/ThemeContext';
-import { SectorProvider } from './contexts/SectorContext';
-import AuditTrailViewer from './components/AuditTrailViewer';
-import SectorSelector from './components/SectorSelector';
-import SectorDashboard from './components/SectorDashboard';
-import { initializeSector } from './utils/sectorInit';
+import Dashboard from "./Dashboard";
+import DataEntry from "./DataEntry";
+import Reports from "./Reports";
+import Analytics from "./Analytics";
+import Compliance from "./Compliance";
+import Regulatory from "./Regulatory";
+import Stakeholders from "./Stakeholders";
+import AdminPanel from "./AdminPanel";
 
-import EvidenceUploader from './components/EvidenceUploader';
-import {
-  LazyDashboard,
-  LazyDataEntry,
-  LazyIndustryStandardDataEntry,
-  LazyReports,
-  LazyAnalytics,
+import ProtectedRoute from "./components/ProtectedRoute";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { SectorProvider } from "./contexts/SectorContext";
 
-  LazyCompliance,
-  LazyRegulatory,
-  LazyStakeholders,
-  LazyAdminPanel,
-  LazyMaterialityAssessment,
-  LazySupplyChainESG,
-  LazyWorkflowDashboard,
-  LazyIntegrationDashboard,
-  LazyCalculatorDashboard,
-  LazyComprehensiveESGDashboard,
-  LazyESGReportingDashboard,
-  LazyStakeholderSentimentDashboard,
-  LazyIoTDashboard,
-  LazyReportsAnalyticsDashboard,
-  LazyEnhancedFrameworkCompliance
-} from './components/LazyComponents';
-import RBACProtectedRoute from './components/ProtectedRoute';
-import UserManagement from './components/UserManagement';
-import { PERMISSIONS } from './utils/rbac';
+import SectorSelector from "./components/SectorSelector";
+import SectorDashboard from "./components/SectorDashboard";
+import EvidenceUploader from "./components/EvidenceUploader";
+import UserManagement from "./components/UserManagement";
 
-// Loading component
+import RBACProtectedRoute from "./components/ProtectedRoute";
+import { PERMISSIONS } from "./utils/rbac";
+import { initializeSector } from "./utils/sectorInit";
+
+/* ================================
+   Loading Spinner
+================================ */
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
   </div>
 );
 
-// ✅ Route guard
-const ProtectedRoute = ({ children }) => {
-  const currentUser = localStorage.getItem("currentUser");
-  return currentUser ? children : <Navigate to="/login" replace />;
+/* ================================
+   Cookie-based ProtectedRoute
+   (RENAMED TO AVOID CONFLICT)
+================================ */
+const CookieProtectedRoute = ({ children }) => {
+  const [loading, setLoading] = useState(true);
+  const [auth, setAuth] = useState(false);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/auth/me", {
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        setAuth(data.authenticated === true);
+        setLoading(false);
+      })
+      .catch(() => {
+        setAuth(false);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return null;
+
+  return auth ? children : <Navigate to="/login" replace />;
 };
 
-// ✅ Footer wrapper
-const Layout = () => {
-  const location = useLocation();
-  const hideFooterOn = ["/login"];
+/* ================================
+   App Routes
+================================ */
+const AppRoutes = () => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={<Login />} />
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      {location.pathname !== '/login' && (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
-          {/* No floating buttons - all moved to Dashboard */}
-        </div>
-      )}
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      <div className="flex-grow">
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/" element={<ProtectedRoute><LazyDashboard /></ProtectedRoute>} />
-            <Route path="/sectors" element={<ProtectedRoute><SectorSelector /></ProtectedRoute>} />
-            <Route path="/sector/:sector" element={<ProtectedRoute><SectorDashboard /></ProtectedRoute>} />
-            <Route path="/data-entry" element={<ProtectedRoute><LazyDataEntry /></ProtectedRoute>} />
-            <Route path="/industry-standard-data-entry" element={<ProtectedRoute><LazyIndustryStandardDataEntry /></ProtectedRoute>} />
-            <Route path="/materiality-assessment" element={<ProtectedRoute><LazyMaterialityAssessment /></ProtectedRoute>} />
-            <Route path="/supply-chain" element={<ProtectedRoute><LazySupplyChainESG /></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute><LazyReports /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><LazyAnalytics /></ProtectedRoute>} />
+      {/* Protected */}
+      <Route
+        path="/dashboard"
+        element={
+          <CookieProtectedRoute>
+            <Dashboard />
+          </CookieProtectedRoute>
+        }
+      />
 
-            <Route path="/compliance" element={<ProtectedRoute><LazyCompliance /></ProtectedRoute>} />
-            <Route path="/stakeholders" element={<ProtectedRoute><LazyStakeholders /></ProtectedRoute>} />
-            <Route path="/regulatory" element={<ProtectedRoute><LazyRegulatory /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><LazyAdminPanel /></ProtectedRoute>} />
-            <Route path="/workflow" element={<ProtectedRoute><LazyWorkflowDashboard /></ProtectedRoute>} />
-            <Route path="/integrations" element={<ProtectedRoute><LazyIntegrationDashboard /></ProtectedRoute>} />
-            <Route path="/calculators" element={<ProtectedRoute><LazyCalculatorDashboard /></ProtectedRoute>} />
-            <Route path="/comprehensive-esg" element={<ProtectedRoute><LazyComprehensiveESGDashboard /></ProtectedRoute>} />
-            <Route path="/esg-reporting" element={<ProtectedRoute><LazyESGReportingDashboard /></ProtectedRoute>} />
-            <Route path="/stakeholder-sentiment" element={<ProtectedRoute><LazyStakeholderSentimentDashboard /></ProtectedRoute>} />
-            <Route path="/iot" element={<ProtectedRoute><LazyIoTDashboard /></ProtectedRoute>} />
-            <Route path="/reports-analytics" element={<ProtectedRoute><LazyReportsAnalyticsDashboard /></ProtectedRoute>} />
-            <Route path="/enhanced-framework-compliance" element={<ProtectedRoute><LazyEnhancedFrameworkCompliance /></ProtectedRoute>} />
-            <Route path="/user-management" element={
-              <RBACProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
-                <UserManagement />
-              </RBACProtectedRoute>
-            } />
-            <Route path="/evidence-management" element={<ProtectedRoute><EvidenceUploader dataId="ESG_MAIN" onClose={() => window.history.back()} /></ProtectedRoute>} />
+      <Route path="/profile" element={<CookieProtectedRoute><Profile /></CookieProtectedRoute>} />
+      <Route path="/sectors" element={<CookieProtectedRoute><SectorSelector /></CookieProtectedRoute>} />
+      <Route path="/sector/:sector" element={<CookieProtectedRoute><SectorDashboard /></CookieProtectedRoute>} />
 
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Suspense>
-      </div>
+      <Route path="/data-entry" element={<CookieProtectedRoute><DataEntry /></CookieProtectedRoute>} />
+      <Route path="/reports" element={<CookieProtectedRoute><Reports /></CookieProtectedRoute>} />
+      <Route path="/analytics" element={<CookieProtectedRoute><Analytics /></CookieProtectedRoute>} />
+      <Route path="/compliance" element={<CookieProtectedRoute><Compliance /></CookieProtectedRoute>} />
+      <Route path="/stakeholders" element={<CookieProtectedRoute><Stakeholders /></CookieProtectedRoute>} />
+      <Route path="/regulatory" element={<CookieProtectedRoute><Regulatory /></CookieProtectedRoute>} />
+      <Route path="/admin" element={<CookieProtectedRoute><AdminPanel /></CookieProtectedRoute>} />
+      <Route path="/admin/dashboard" element={<CookieProtectedRoute><AdminPanel /></CookieProtectedRoute>} />
 
-    </div>
-  );
-};
+      {/* RBAC */}
+      <Route
+        path="/user-management"
+        element={
+          <RBACProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+            <UserManagement />
+          </RBACProtectedRoute>
+        }
+      />
 
+      {/* Evidence */}
+      <Route
+        path="/evidence-management"
+        element={
+          <CookieProtectedRoute>
+            <EvidenceUploader
+              dataId="ESG_MAIN"
+              onClose={() => window.history.back()}
+            />
+          </CookieProtectedRoute>
+        }
+      />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </Suspense>
+);
+
+/* ================================
+   App Root
+================================ */
 function App() {
-  // Initialize sector on app start
-  React.useEffect(() => {
+  useEffect(() => {
     initializeSector();
   }, []);
 
   return (
     <ThemeProvider>
       <SectorProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Layout />
+        <Router>
+          <AppRoutes />
         </Router>
       </SectorProvider>
     </ThemeProvider>

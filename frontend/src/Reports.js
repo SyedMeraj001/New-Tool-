@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
 import { getStoredData, initializeStorage } from "./utils/storage";
 import esgAPI from "./api/esgAPI";
@@ -159,12 +159,10 @@ const dedupeEntries = (entries = []) => {
 };
 
 function Reports() {
+  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const theme = getThemeClasses(isDark);
-  const [currentUser] = useState({ 
-    role: localStorage.getItem('userRole') || 'esg_manager', 
-    id: localStorage.getItem('currentUser') || 'user_123' 
-  });
+  const [currentUser, setCurrentUser] = useState(null);
   const [data, setData] = useState([]);
   const [selectedReport, setSelectedReport] = useState("GRI Standards");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -204,6 +202,27 @@ function Reports() {
   const [sortBy, setSortBy] = useState('compliance');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedFrameworks, setSelectedFrameworks] = useState([]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        navigate('/login');
+      }
+    };
+    fetchCurrentUser();
+  }, [navigate]);
 
 
   // Clear all data from localStorage
@@ -1001,35 +1020,24 @@ function Reports() {
     showToast(details, 'info');
   };
 
-  const deleteItem = (displayIndex) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+  const deleteCompany = async (companyName) => {
+    if (!window.confirm(`Are you sure you want to delete all data for ${companyName}? This action cannot be undone.`)) return;
     
     try {
-      const filteredData = getFilteredAndSortedData();
-      const itemToDelete = filteredData[displayIndex];
+      // Remove from localStorage
+      const updatedData = data.filter(item => item.companyName !== companyName);
+      setData(updatedData);
+      localStorage.setItem('esgData', JSON.stringify(updatedData));
       
-      if (!itemToDelete || itemToDelete._originalIndex === undefined) {
-        showToast('Item not found', 'error');
-        return;
-      }
+      // Update aggregated data
+      const normalized = normalizeData(updatedData);
+      setYearlyData(aggregateByYear(normalized));
+      setOverallSummary(aggregateOverall(normalized));
       
-      // Use the stored original index to remove from data array
-      const newData = [...data];
-      newData.splice(itemToDelete._originalIndex, 1);
-      
-      // Update state
-      setData(newData);
-      
-      // Update localStorage
-      localStorage.setItem('esgData', JSON.stringify(newData));
-      
-      // Clear selections
-      setSelectedItems([]);
-      
-      showToast('Item deleted successfully', 'success');
+      showToast(`Company ${companyName} deleted successfully`, 'success');
     } catch (error) {
-      console.error('Delete error:', error);
-      showToast('Failed to delete item', 'error');
+      console.error('Delete company error:', error);
+      showToast('Failed to delete company', 'error');
     }
   };
 
@@ -1283,11 +1291,11 @@ function Reports() {
     return converted;
   };
 
-  const canViewReports = hasPermission(currentUser.role, PERMISSIONS.VIEW_REPORTS);
-  const canExportReports = hasPermission(currentUser.role, PERMISSIONS.EXPORT_REPORTS);
-  const canPrintReports = hasPermission(currentUser.role, PERMISSIONS.PRINT_REPORTS);
-  const canDownloadReports = hasPermission(currentUser.role, PERMISSIONS.DOWNLOAD_REPORTS);
-  const canDeleteData = hasPermission(currentUser.role, PERMISSIONS.DELETE_DATA);
+  const canViewReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.VIEW_REPORTS) : false;
+  const canExportReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.EXPORT_REPORTS) : false;
+  const canPrintReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.PRINT_REPORTS) : false;
+  const canDownloadReports = currentUser ? hasPermission(currentUser.role, PERMISSIONS.DOWNLOAD_REPORTS) : false;
+  const canDeleteData = currentUser ? hasPermission(currentUser.role, PERMISSIONS.DELETE_DATA) : false;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme.bg.gradient}`}>
@@ -1295,7 +1303,7 @@ function Reports() {
         onLogout={() => {
           window.location.href = "/login";
         }}
-        currentUser="admin@esgenius.com"
+        currentUser={currentUser}
         title="ESG Reports & Analytics"
         subtitle="Comprehensive ESG Performance Reporting"
         showBreadcrumb={true}
@@ -2154,15 +2162,15 @@ function Reports() {
                           >
                             <span className="text-blue-600">👁️</span>
                           </button>
-                          {canDeleteData && (
-                            <button
-                              onClick={() => deleteItem(idx)}
-                              className={`p-2 rounded-lg transition-colors duration-200 ${theme.hover.subtle}`}
-                              title="Delete"
-                            >
-                              <span className="text-red-600">🗑️</span>
-                            </button>
-                          )}
+                    {canDeleteData && (
+                      <button
+                        onClick={() => deleteCompany(item.companyName)}
+                        className={`p-2 rounded-lg transition-colors duration-200 ${theme.hover.subtle}`}
+                        title="Delete Company"
+                      >
+                        <span className="text-red-600">🗑️</span>
+                      </button>
+                    )}
                         </div>
                       </td>
                     </tr>

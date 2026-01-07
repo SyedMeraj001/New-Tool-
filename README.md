@@ -699,7 +699,7 @@ CREATE TABLE user_sessions (
   <tr>
     <td align="center">
       <strong>Venkatareddy26</strong><br>
-      <sub>Lead Developer</sub><br>
+      <sub>Developer</sub><br>
       <sub>Analytics, Workflows, Security</sub>
     </td>
     <td align="center">

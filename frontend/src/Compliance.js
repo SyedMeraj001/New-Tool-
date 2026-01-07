@@ -49,9 +49,21 @@ const Compliance = () => {
   const [documents, setDocuments] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-<<<<<<< HEAD
   const [dragActive, setDragActive] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+
+  /* ===================== FETCH DATA ===================== */
+  const fetchDocuments = async () => {
+    const res = await fetch(`${API_URL}/api/compliance`);
+    const data = await res.json();
+    setDocuments(Array.isArray(data) ? data : []);
+  };
+
+  const fetchRequirements = async () => {
+    const res = await fetch(`${API_URL}/api/compliance/requirements`);
+    const data = await res.json();
+    setRequirements(Array.isArray(data) ? data : []);
+  };
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -70,21 +82,6 @@ const Compliance = () => {
     };
     fetchCurrentUser();
   }, []);
-=======
-
-  /* ===================== FETCH DATA ===================== */
-  const fetchDocuments = async () => {
-    const res = await fetch(`${API_URL}/api/compliance`);
-    const data = await res.json();
-    setDocuments(Array.isArray(data) ? data : []);
-  };
-
-  const fetchRequirements = async () => {
-    const res = await fetch(`${API_URL}/api/compliance/requirements`);
-    const data = await res.json();
-    setRequirements(Array.isArray(data) ? data : []);
-  };
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
 
   useEffect(() => {
     Promise.all([fetchDocuments(), fetchRequirements()]).finally(() =>

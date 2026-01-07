@@ -76,12 +76,12 @@
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18, Tailwind CSS, React Router |
+| **Frontend** | React 18, Tailwind CSS, React Router, AuthContext |
 | **Backend** | Node.js 22, Express.js, ES Modules |
 | **Database** | PostgreSQL 18, Sequelize ORM |
-| **Authentication** | JWT, bcrypt, HTTP-only Cookies |
+| **Authentication** | JWT (HTTP-only cookies), bcrypt (12 rounds), Database Sessions |
 | **File Upload** | Multer, XLSX parsing |
-| **Security** | CORS, Helmet, Rate Limiting |
+| **Security** | CORS, cookie-parser, No localStorage |
 
 ---
 
@@ -376,22 +376,60 @@ http://localhost:5000/api
 ```
 
 
-### Authentication APIs
+### Authentication APIs (Secure - January 2026)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/auth/login` | User login |
-| `POST` | `/auth/register` | User registration |
-| `GET` | `/auth/me` | Get current user |
-| `POST` | `/auth/logout` | Logout |
-| `GET` | `/auth/users` | List all users |
-| `GET` | `/auth/stats` | User statistics |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/auth/login` | Secure login with bcrypt | ❌ |
+| `POST` | `/auth/register` | Register with hashed password | ❌ |
+| `GET` | `/auth/me` | Get current user from cookie | ✅ |
+| `POST` | `/auth/logout` | Logout & invalidate session | ✅ |
+| `GET` | `/auth/users` | List all users (admin) | ✅ |
+| `POST` | `/auth/change-password` | Change password | ✅ |
+| `PATCH` | `/auth/users/:id/activate` | Activate/deactivate user | ✅ |
 
-**Login Example:**
+**Secure Login Example:**
 ```bash
+# Login - sets HTTP-only cookie automatically
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
+  -c cookies.txt \
   -d '{"email": "superadmin1@esgenius.com", "password": "Admin@2025", "role": "super_admin"}'
+
+# Response:
+{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "id": 1,
+    "email": "superadmin1@esgenius.com",
+    "fullName": "Super Admin 1",
+    "role": "super_admin"
+  }
+}
+
+# Subsequent requests - cookie sent automatically
+curl http://localhost:5000/api/auth/me \
+  -b cookies.txt
+
+# Response:
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "email": "superadmin1@esgenius.com",
+    "fullName": "Super Admin 1",
+    "role": "super_admin"
+  }
+}
+```
+
+**Change Password:**
+```bash
+curl -X POST http://localhost:5000/api/auth/change-password \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{"currentPassword": "Admin@2025", "newPassword": "NewSecure@2026"}'
 ```
 
 ### Analytics APIs (Venkat)
@@ -484,49 +522,142 @@ Level 1: SITE → Level 2: BUSINESS_UNIT → Level 3: GROUP_ESG → Level 4: EXE
 
 ## 🔐 Security Features
 
-### Authentication & Authorization
+### 🔒 Authentication & Authorization (NEW - January 2026)
 
-| Feature | Implementation |
-|---------|----------------|
-| **Password Hashing** | bcrypt with salt rounds |
-| **JWT Tokens** | HTTP-only cookies, 1-day expiry |
-| **Session Management** | Database-backed, 128-char tokens |
-| **Role-Based Access** | Super Admin, Supervisor, Data Entry |
+| Feature | Implementation | Status |
+|---------|----------------|--------|
+| **Password Hashing** | bcrypt with 12 salt rounds | ✅ Secure |
+| **JWT Tokens** | HTTP-only cookies, 24h expiry | ✅ Secure |
+| **Session Management** | Database-backed sessions | ✅ Secure |
+| **No localStorage** | All auth via cookies only | ✅ Secure |
+| **Role-Based Access** | Super Admin, Supervisor, Data Entry | ✅ Active |
+| **Auto Password Migration** | Plain text → bcrypt on first login | ✅ Active |
+
+### 🛡️ Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SECURE AUTHENTICATION FLOW                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. LOGIN REQUEST                                                │
+│     ┌──────────┐    POST /api/auth/login    ┌──────────────┐   │
+│     │ Frontend │ ─────────────────────────► │   Backend    │   │
+│     │ (React)  │    {email, password, role} │  (Express)   │   │
+│     └──────────┘                            └──────────────┘   │
+│                                                     │           │
+│  2. PASSWORD VERIFICATION                           ▼           │
+│     ┌──────────────────────────────────────────────────────┐   │
+│     │  bcrypt.compare(password, hashedPassword)            │   │
+│     │  ✅ 12 salt rounds for maximum security              │   │
+│     └──────────────────────────────────────────────────────┘   │
+│                                                     │           │
+│  3. SESSION CREATION                                ▼           │
+│     ┌──────────────────────────────────────────────────────┐   │
+│     │  INSERT INTO user_sessions (token, userId, expiresAt)│   │
+│     │  ✅ Sessions stored in PostgreSQL database           │   │
+│     └──────────────────────────────────────────────────────┘   │
+│                                                     │           │
+│  4. JWT COOKIE SET                                  ▼           │
+│     ┌──────────────────────────────────────────────────────┐   │
+│     │  Set-Cookie: token=JWT; HttpOnly; Secure; SameSite   │   │
+│     │  ✅ NOT accessible via JavaScript (XSS protected)    │   │
+│     └──────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  5. SUBSEQUENT REQUESTS                                          │
+│     ┌──────────┐    Cookie: token=JWT       ┌──────────────┐   │
+│     │ Frontend │ ─────────────────────────► │   Backend    │   │
+│     │          │    (auto-sent by browser)  │              │   │
+│     └──────────┘                            └──────────────┘   │
+│                                                     │           │
+│  6. SESSION VALIDATION                              ▼           │
+│     ┌──────────────────────────────────────────────────────┐   │
+│     │  SELECT * FROM user_sessions WHERE token = $1        │   │
+│     │  AND isActive = true AND expiresAt > NOW()           │   │
+│     └──────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### ❌ OLD vs ✅ NEW Security
+
+| Aspect | ❌ OLD (Insecure) | ✅ NEW (Secure) |
+|--------|-------------------|-----------------|
+| **Password Storage** | Plain text in database | bcrypt hashed (12 rounds) |
+| **Token Storage** | localStorage (XSS vulnerable) | HTTP-only cookie |
+| **Session Validation** | Client-side only | Server-side database check |
+| **User Data** | Stored in browser | Fetched from server on each request |
+| **Logout** | Clear localStorage | Invalidate session in database |
+
+### 🔐 Cookie Security Settings
+
+```javascript
+// HTTP-only cookie configuration
+res.cookie('token', jwtToken, {
+  httpOnly: true,      // ✅ Not accessible via JavaScript
+  secure: true,        // ✅ HTTPS only in production
+  sameSite: 'lax',     // ✅ CSRF protection
+  maxAge: 86400000,    // ✅ 24 hour expiry
+  path: '/'            // ✅ Available on all routes
+});
+```
 
 ### Data Security
 
 | Feature | Description |
 |---------|-------------|
-| **Secure Sessions** | Sessions stored in PostgreSQL, not localStorage |
-| **CORS Protection** | Configured for frontend origin only |
+| **Secure Sessions** | Sessions stored in PostgreSQL `user_sessions` table |
+| **CORS Protection** | Configured for frontend origin only with credentials |
 | **Input Validation** | Server-side validation on all inputs |
 | **SQL Injection Prevention** | Parameterized queries via Sequelize |
 | **Audit Logging** | Blockchain-style hash chain for compliance |
 
-### Session Security (Replaces localStorage)
+### Database Tables for Security
 
-```javascript
-// OLD (Insecure) - localStorage
-localStorage.setItem('token', token);  // ❌ XSS vulnerable
+```sql
+-- Secure user sessions (replaces localStorage)
+CREATE TABLE user_sessions (
+  id UUID PRIMARY KEY,
+  "userId" VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  "expiresAt" TIMESTAMP NOT NULL,
+  "ipAddress" VARCHAR(50),
+  "isActive" BOOLEAN DEFAULT true,
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP DEFAULT NOW()
+);
 
-// NEW (Secure) - Database sessions
-await SecureStorage.createSession(email, role, userId);  // ✅ Secure
+-- Users with hashed passwords
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,  -- bcrypt hashed
+  full_name VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 ```
 
-**Database Tables for Security:**
-- `user_sessions` - Secure session tokens (128-char)
-- `user_preferences` - User settings (theme, 2FA)
-- `validation_results` - Data validation history
-- `safety_compliance` - Safety checklists
-- `audit_logs` - Immutable audit trail
-
-### Environment Variables
+### Environment Variables (Security)
 
 ```env
-# Never commit these to Git!
-JWT_SECRET=your-secret-key
-DB_PASSWORD=your-db-password
+# ⚠️ NEVER commit these to Git!
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
+DB_PASSWORD=your-database-password
+
+# Production settings
+NODE_ENV=production  # Enables secure cookies
 ```
+
+### Password Requirements
+
+- Passwords are hashed using bcrypt with 12 salt rounds
+- Auto-migration: Plain text passwords are automatically hashed on first login
+- New registrations always use hashed passwords
+- Change password endpoint available at `/api/auth/change-password`
 
 ---
 

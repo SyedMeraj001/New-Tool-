@@ -96,22 +96,26 @@ export const hasAllPermissions = (userRole, permissionsList) => {
   return permissionsList.every(permission => hasPermission(userRole, permission));
 };
 
-// Get user role from localStorage
+// Get user role - fetch from cookie session
 export const getUserRole = () => {
-  return localStorage.getItem('userRole') || null;
+  // This is used for quick checks - actual auth is via cookies
+  // For real-time role, use the AuthContext or fetch /api/auth/me
+  return sessionStorage.getItem('userRole') || null;
 };
 
-// Get user info from localStorage
+// Get user info - for display purposes only
 export const getCurrentUser = () => {
-  const email = localStorage.getItem('currentUser');
-  const role = getUserRole();
-  const fullName = localStorage.getItem('userFullName');
-  return { email, role, fullName };
+  return {
+    email: sessionStorage.getItem('currentUser'),
+    role: sessionStorage.getItem('userRole'),
+    fullName: sessionStorage.getItem('userFullName')
+  };
 };
 
-// Check if user is logged in
+// Check if user is logged in - actual auth is via HTTP-only cookies
 export const isAuthenticated = () => {
-  return localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('currentUser');
+  // This is a quick check - real auth verification happens server-side
+  return sessionStorage.getItem('isLoggedIn') === 'true';
 };
 
 // Role display names

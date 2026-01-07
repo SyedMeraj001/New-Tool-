@@ -20,6 +20,7 @@ import AdminPanel from "./AdminPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SectorProvider } from "./contexts/SectorContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 import SectorSelector from "./components/SectorSelector";
 import SectorDashboard from "./components/SectorDashboard";
@@ -41,11 +42,12 @@ const LoadingSpinner = () => (
 
 /* ================================
    Cookie-based ProtectedRoute
-   (RENAMED TO AVOID CONFLICT)
+   All auth via HTTP-only cookies - NO localStorage
 ================================ */
 const CookieProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [auth, setAuth] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/auth/me", {
@@ -53,8 +55,12 @@ const CookieProtectedRoute = ({ children }) => {
     })
       .then(res => res.json())
       .then(data => {
-        // Check for success: true (from our JWT auth) or authenticated: true
-        setAuth(data.success === true || data.authenticated === true);
+        if (data.success && data.user) {
+          setAuth(true);
+          setUser(data.user);
+        } else {
+          setAuth(false);
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -141,13 +147,15 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <SectorProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </SectorProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <SectorProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </SectorProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

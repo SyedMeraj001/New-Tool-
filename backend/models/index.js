@@ -1,9 +1,10 @@
 // ================================
-// models/index.js - Sequelize Models
+// models/index.js - Sequelize Models (ES Modules)
 // ================================
 
-const { Sequelize, DataTypes } = require('sequelize');
-require('dotenv').config();
+import { Sequelize, DataTypes } from 'sequelize';
+import crypto from 'crypto';
+import 'dotenv/config';
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -16,6 +17,11 @@ const sequelize = new Sequelize(
     logging: false,
   }
 );
+
+// Generate secure session token
+const generateSessionToken = () => {
+  return crypto.randomBytes(64).toString('hex');
+};
 
 // ApprovalWorkflow Model
 const ApprovalWorkflow = sequelize.define('ApprovalWorkflow', {
@@ -64,8 +70,71 @@ const Notification = sequelize.define('Notification', {
   workflowId: { type: DataTypes.UUID, allowNull: true },
 }, { tableName: 'notifications', timestamps: true });
 
+// UserSession Model (Secure Sessions)
+const UserSession = sequelize.define('UserSession', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING, allowNull: false },
+  role: { type: DataTypes.STRING, allowNull: false },
+  token: { type: DataTypes.STRING(128), allowNull: false, unique: true },
+  expiresAt: { type: DataTypes.DATE, allowNull: false },
+  ipAddress: { type: DataTypes.STRING, allowNull: true },
+  userAgent: { type: DataTypes.TEXT, allowNull: true },
+  isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { tableName: 'user_sessions', timestamps: true });
+
+// UserPreference Model
+const UserPreference = sequelize.define('UserPreference', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING, allowNull: false },
+  theme: { type: DataTypes.STRING, defaultValue: 'light' },
+  companyName: { type: DataTypes.STRING, allowNull: true },
+  currentSector: { type: DataTypes.STRING, defaultValue: 'manufacturing' },
+  twoFactorEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  twoFactorMethod: { type: DataTypes.STRING, allowNull: true },
+  encryptionEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  settings: { type: DataTypes.JSONB, defaultValue: {} },
+}, { tableName: 'user_preferences', timestamps: true });
+
+// ValidationResult Model
+const ValidationResult = sequelize.define('ValidationResult', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.STRING, allowNull: false },
+  score: { type: DataTypes.INTEGER, defaultValue: 0 },
+  completeness: { type: DataTypes.INTEGER, defaultValue: 0 },
+  errors: { type: DataTypes.JSONB, defaultValue: [] },
+  warnings: { type: DataTypes.JSONB, defaultValue: [] },
+  suggestions: { type: DataTypes.JSONB, defaultValue: [] },
+  details: { type: DataTypes.JSONB, defaultValue: {} },
+}, { tableName: 'validation_results', timestamps: true });
+
+// SafetyCompliance Model
+const SafetyCompliance = sequelize.define('SafetyCompliance', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.STRING, allowNull: false },
+  riskGuidelines: { type: DataTypes.JSONB, defaultValue: [] },
+  emergencyContacts: { type: DataTypes.JSONB, defaultValue: [] },
+  travelInsurances: { type: DataTypes.JSONB, defaultValue: [] },
+  documents: { type: DataTypes.JSONB, defaultValue: [] },
+  safetyChecklist: { type: DataTypes.JSONB, defaultValue: [] },
+  healthTips: { type: DataTypes.JSONB, defaultValue: [] },
+  travelTips: { type: DataTypes.JSONB, defaultValue: [] },
+}, { tableName: 'safety_compliance', timestamps: true });
+
 // Relationships
 ApprovalWorkflow.hasMany(ApprovalStep, { foreignKey: 'workflowId', as: 'steps' });
 ApprovalStep.belongsTo(ApprovalWorkflow, { foreignKey: 'workflowId' });
 
-module.exports = { sequelize, ApprovalWorkflow, ApprovalStep, AuditLog, Notification };
+export { 
+  sequelize, 
+  ApprovalWorkflow, 
+  ApprovalStep, 
+  AuditLog, 
+  Notification,
+  UserSession,
+  UserPreference,
+  ValidationResult,
+  SafetyCompliance,
+  generateSessionToken
+};

@@ -157,6 +157,7 @@ function Dashboard() {
   const { isDark, toggleTheme } = useTheme();
   const { currentSector, sectorConfig } = useSector();
   const theme = getThemeClasses(isDark);
+  const [currentUser, setCurrentUser] = useState(null);
   const [kpis, setKpis] = useState({
     overallScore: 0,
     complianceRate: 0,
@@ -180,9 +181,26 @@ function Dashboard() {
   const [validationResults, setValidationResults] = useState([]);
 
   useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        navigate('/login');
+      }
+    };
+
     const updateData = async () => {
-      const currentUser = localStorage.getItem('currentUser');
-      const companyId = currentUser || '1';
+      const companyId = currentUser?.id || '1';
       setLoading(true);
       
       try {
@@ -246,8 +264,10 @@ function Dashboard() {
       setValidationResults(recentValidation);
     };
     
-    updateData();
-    loadAlerts();
+    fetchCurrentUser().then(() => {
+      updateData();
+      loadAlerts();
+    });
     
     // Listen for storage changes to update in real-time
     const handleStorageChange = (e) => {
@@ -265,24 +285,30 @@ function Dashboard() {
     window.addEventListener('alertsCleared', handleCustomEvent);
     
     // Check for updates periodically
-    const interval = setInterval(() => {
-      updateData();
-      loadAlerts();
-    }, 5000);
+    // const interval = setInterval(() => {
+    //   updateData();
+    //   loadAlerts();
+    // }, 5000);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('alertsCleared', handleCustomEvent);
-      clearInterval(interval);
+      // clearInterval(interval);
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:5000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     localStorage.removeItem("currentUser");
     navigate("/login");
   };
-
-  const currentUser = localStorage.getItem('currentUser');
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${
@@ -411,7 +437,7 @@ function Dashboard() {
                       { icon: '👥', label: 'User Management', action: () => setShowUserManagement(true), superAdminOnly: true }
                     ].map((action, index) => {
                       // Check if super admin only and current user is not super admin
-                      if (action.superAdminOnly && localStorage.getItem('userRole') !== 'super_admin') {
+                      if (action.superAdminOnly && currentUser?.role !== 'super_admin') {
                         return null;
                       }
                       

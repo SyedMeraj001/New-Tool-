@@ -24,13 +24,34 @@ const RegulatoryComplianceManager = ({ onClose }) => {
   }, []);
 
   const loadComplianceData = () => {
+    // Get actual ESG data from localStorage
+    const esgData = JSON.parse(localStorage.getItem('esgData') || '[]');
     const frameworks = ['GRI', 'SASB', 'TCFD', 'BRSR'];
     const frameworkScores = {};
     
-    frameworks.forEach(fw => {
-      const score = Math.floor(Math.random() * 40) + 60;
-      frameworkScores[fw] = score;
-    });
+    if (esgData.length > 0) {
+      // Calculate real compliance scores based on data completeness
+      frameworks.forEach(fw => {
+        const latestData = esgData[esgData.length - 1];
+        let score = 0;
+        
+        // Calculate based on actual data fields filled
+        const envFields = Object.values(latestData.environmental || {}).filter(v => v !== '').length;
+        const socialFields = Object.values(latestData.social || {}).filter(v => v !== '').length;
+        const govFields = Object.values(latestData.governance || {}).filter(v => v !== '').length;
+        
+        const totalFields = envFields + socialFields + govFields;
+        const maxFields = 25; // Approximate total ESG fields
+        
+        score = Math.min(Math.round((totalFields / maxFields) * 100), 100);
+        frameworkScores[fw] = score;
+      });
+    } else {
+      // No data entered yet
+      frameworks.forEach(fw => {
+        frameworkScores[fw] = 0;
+      });
+    }
 
     const risks = [
       { id: 1, title: 'Missing GHG Scope 3 Data', severity: 'High', impact: 'Compliance Gap' },

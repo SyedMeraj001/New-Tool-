@@ -1,4 +1,9 @@
-import { useState } from "react";
+<<<<<<< HEAD
+=======
+
+//frontend/src/DataEntry.js
+>>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { debounce } from "lodash";
 import APIService from "./services/apiService";
@@ -27,6 +32,7 @@ function DataEntry() {
   const canEdit = hasPermission(userRole, PERMISSIONS.EDIT_DATA);
   const canDelete = hasPermission(userRole, PERMISSIONS.DELETE_DATA);
   const canAuthorize = hasPermission(userRole, PERMISSIONS.AUTHORIZE_DATA);
+  const [currentUser, setCurrentUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -58,6 +64,7 @@ function DataEntry() {
       sector: "",
       region: "",
       reportingFramework: "GRI",
+      assuranceLevel: "None",
       siteId: null,
       siteName: ""
     },
@@ -128,8 +135,29 @@ function DataEntry() {
   const [dragOver, setDragOver] = useState(false);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
 
+  // Fetch current user from backend
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentUser(data);
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        window.location.href = '/login';
+      }
+    };
+    fetchUser();
+  }, []);
+
   // Load saved company name on mount
-  useState(() => {
+  useEffect(() => {
     const savedCompany = localStorage.getItem('esg_company_name');
     if (savedCompany && !formData.companyInfo.companyName) {
       setFormData(prev => ({
@@ -192,9 +220,6 @@ function DataEntry() {
       return newData;
     });
   };
-
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -232,6 +257,8 @@ function DataEntry() {
         sector: formData.companyInfo.sector,
         region: formData.companyInfo.region,
         reportingYear: formData.companyInfo.reportingYear,
+        framework: formData.companyInfo.reportingFramework,
+        assuranceLevel: formData.companyInfo.assuranceLevel || 'None',
         siteId: selectedSite?.id || null,
         siteName: selectedSite?.name || null,
         siteType: selectedSite?.type || null,
@@ -244,8 +271,8 @@ function DataEntry() {
       };
       
       // Save to database via ModuleAPI
-      const currentUser = localStorage.getItem('currentUser') || 'admin@esgenius.com';
-      const companyId = currentUser || '1';
+      const userId = currentUser?.email || currentUser?.id || 'unknown';
+      const companyId = userId;
       const userRole = getUserRole();
       
       // Create approval workflow for data_entry role
@@ -256,7 +283,7 @@ function DataEntry() {
         const workflowEntry = {
           id: submissionData.id,
           title: `ESG Data Entry - ${submissionData.companyName}`,
-          submittedBy: currentUser,
+          submittedBy: userId,
           createdAt: submissionData.timestamp,
           status: 'pending',
           data: submissionData,
@@ -302,7 +329,7 @@ function DataEntry() {
           id: Date.now(),
           type: 'info',
           title: 'New Data Pending Approval',
-          message: `${currentUser} submitted ESG data for approval`,
+          message: `${currentUser?.fullName || userId} submitted ESG data for approval`,
           category: 'Approval',
           timestamp: new Date().toISOString(),
           read: false,
@@ -311,58 +338,68 @@ function DataEntry() {
         localStorage.setItem('recentAlerts', JSON.stringify(alerts));
       }
       try {
+        console.log('Attempting to save to database...');
+        
+        // Save to database via API
+        const companyResponse = await APIService.saveCompany({
+          company_name: submissionData.companyName,
+          sector: submissionData.sector,
+          region: submissionData.region,
+          reporting_year: submissionData.reportingYear,
+          primary_framework: submissionData.framework,
+          assurance_level: submissionData.assuranceLevel
+        });
+        
+        console.log('Company saved:', companyResponse);
+        const dbCompanyId = companyResponse.id;
+        
         // Save environmental data
-        if (formData.environmental.scope1Emissions) {
-          await ModuleAPI.saveModuleData('AirQualityData', companyId, {
-            locationId: 'main_facility',
-            pollutantType: 'CO2',
-            concentration: parseFloat(formData.environmental.scope1Emissions),
-            unit: 'tCO2e',
-            measurementDate: new Date(),
-            complianceStatus: 'compliant'
+        if (Object.values(formData.environmental).some(v => v !== '')) {
+          const envResponse = await APIService.saveEnvironmental({
+            company_id: dbCompanyId,
+            ...formData.environmental
           });
+          console.log('Environmental saved:', envResponse);
         }
         
         // Save social data
-        if (formData.social.totalEmployees) {
-          await ModuleAPI.saveWorkforceData(companyId, {
-            employeeId: `BULK_${Date.now()}`,
-            department: 'All Departments',
-            position: 'Various',
-            gender: 'mixed',
-            hireDate: new Date(),
-            trainingHours: parseFloat(formData.social.trainingHoursPerEmployee || 0),
-            isActive: true
+        if (Object.values(formData.social).some(v => v !== '')) {
+          const socialResponse = await APIService.saveSocial({
+            company_id: dbCompanyId,
+            ...formData.social
           });
+          console.log('Social saved:', socialResponse);
         }
         
         // Save governance data
-        if (formData.governance.boardSize) {
-          await ModuleAPI.saveModuleData('EthicsCompliance', companyId, {
-            policyType: 'board_governance',
-            complianceStatus: 'compliant',
-            auditScore: 85,
-            auditDate: new Date()
+        if (Object.values(formData.governance).some(v => v !== '')) {
+          const govResponse = await APIService.saveGovernance({
+            company_id: dbCompanyId,
+            ...formData.governance
           });
+          console.log('Governance saved:', govResponse);
         }
         
-        // Also save to localStorage for backward compatibility
+        console.log('All data saved to database successfully');
+        
+        // Also save to localStorage for UI compatibility
         const existing = JSON.parse(localStorage.getItem('esgData') || '[]');
         existing.push(submissionData);
         localStorage.setItem('esgData', JSON.stringify(existing));
-        localStorage.setItem('esg_last_submission', JSON.stringify(submissionData));
         
-        // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('esgDataUpdated', { detail: submissionData }));
-        
-        // Trigger storage event for workflow dashboard
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'esgData',
-          newValue: JSON.stringify(existing)
-        }));
       } catch (e) {
-        console.error('Failed to save data:', e);
-        throw new Error('Failed to save data');
+        console.error('Database save failed:', e);
+        console.error('Error details:', e.message);
+        
+<<<<<<< HEAD
+=======
+        // Still save to localStorage if database fails
+        const existing = JSON.parse(localStorage.getItem('esgData') || '[]');
+        existing.push(submissionData);
+        localStorage.setItem('esgData', JSON.stringify(existing));
+        
+        showToast('Data saved locally. Database connection failed.', 'warning');
       }
       
       setCompletedSteps(prev => new Set([...prev, 5]));
@@ -396,6 +433,7 @@ function DataEntry() {
         setUploadProgress(30);
         let jsonData;
         
+>>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
         if (file.name.endsWith('.json')) {
           jsonData = JSON.parse(event.target.result);
         } else {
@@ -462,10 +500,17 @@ function DataEntry() {
 
         setUploadProgress(90);
         // Save bulk data via API
+<<<<<<< HEAD
+        const userId = currentUser?.email || currentUser?.id || 'unknown';
+        
+        // Save each formatted entry to database via ModuleAPI
+        const companyId = userId;
+=======
         const currentUser = 'admin@esgenius.com'; // Use consistent user ID
         
         // Save each formatted entry to database via ModuleAPI
         const companyId = 'admin@esgenius.com';
+>>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
         Promise.all(formatted.map(async entry => {
           try {
             // Determine which module to save to based on category and metric
@@ -480,7 +525,7 @@ function DataEntry() {
                   reportingPeriod: entry.reportingYear
                 });
               } else {
-                await ModuleAPI.saveModuleData('AirQualityData', companyId, {
+                await ModuleAPI.saveAirQualityData(companyId, {
                   locationId: 'main_facility',
                   pollutantType: entry.metric,
                   concentration: entry.value,
@@ -509,7 +554,9 @@ function DataEntry() {
                 });
               }
             } else if (entry.category === 'governance') {
-              await ModuleAPI.saveModuleData('EthicsCompliance', companyId, {
+              // Use governance endpoint for ethics compliance data
+              await APIService.saveGovernance({
+                company_id: companyId,
                 policyType: entry.metric,
                 complianceStatus: 'compliant',
                 auditScore: entry.value,
@@ -647,6 +694,7 @@ function DataEntry() {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme.bg.gradient}`}>
       <ProfessionalHeader 
+        currentUser={currentUser}
         onLogout={handleLogout}
         actions={[
           {
@@ -1894,17 +1942,6 @@ function DataEntry() {
               </div>
             </div>
           )}
-
-
-
-
-
-
-
-
-
-
-
           {/* Step Navigation Buttons */}
           <div className={`pt-8 flex justify-between items-center border-t ${theme.border.primary}`}>
             <div className="flex gap-3">

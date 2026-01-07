@@ -4,85 +4,96 @@ class APIService {
   static async request(endpoint, options = {}) {
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
-        ...options
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+        credentials: "include",
+        ...options,
       });
-      return response.ok ? await response.json() : { error: 'API Error' };
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "API Error");
+      return data;
     } catch (error) {
-      console.warn('API unavailable:', error.message);
-      return { error: 'Backend offline' };
+      console.warn("❌ API Error:", error.message);
+      throw error;
     }
   }
 
-  // ERP Integration
-  static configureERP(config) {
-    return this.request('/integrations/erp/configure', {
-      method: 'POST',
-      body: JSON.stringify(config)
+  // =========================
+  // AUTH
+  // =========================
+  static login(payload) {
+    return this.request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
   }
 
-  static syncERP() {
-    return this.request('/integrations/erp/sync', { method: 'POST' });
-  }
-
-  // HR Integration  
-  static configureHR(config) {
-    return this.request('/integrations/hr/configure', {
-      method: 'POST',
-      body: JSON.stringify(config)
+  // =========================
+  // COMPANY (STEP 1)
+  // =========================
+  static saveCompany(data) {
+    return this.request("/company", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
-  static syncHR() {
-    return this.request('/integrations/hr/sync', { method: 'POST' });
+  static getCompanyByYear(year) {
+    return this.request(`/company/year/${year}`);
   }
 
-  // Integration Status
-  static getIntegrationStatus() {
-    return this.request('/integrations/status');
-  }
-
-  // ESG Data Management
-  static async saveESGData(data) {
-    try {
-      const response = await this.request('/esg/data', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      
-      return response;
-    } catch (error) {
-      console.error('Failed to save ESG data:', error);
-      return false;
-    }
-  }
-
-  // Compliance Validation
-  static validateCompliance(data) {
-    return this.request('/compliance/validate', {
-      method: 'POST',
-      body: JSON.stringify(data)
+  // =========================
+  // ENVIRONMENTAL (STEP 2)
+  // =========================
+  static saveEnvironmental(data) {
+    return this.request("/environmental", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
-  // GHG Calculations
-  static calculateGHG(data) {
-    return this.request('/ghg/calculate', {
-      method: 'POST',
-      body: JSON.stringify(data)
+  static getEnvironmental(companyId) {
+    return this.request(`/environmental/${companyId}`);
+  }
+
+  // =========================
+  // SOCIAL (STEP 3)
+  // =========================
+  static saveSocial(data) {
+    return this.request("/social", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
-  // ESG Data Management
+  static getSocial(companyId) {
+    return this.request(`/social/${companyId}`);
+  }
+
+  // =========================
+  // GOVERNANCE (STEP 4)
+  // =========================
+  static saveGovernance(data) {
+    return this.request("/governance", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  static getGovernance(companyId) {
+    return this.request(`/governance/${companyId}`);
+  }
+
+  // =========================
+  // ESG DATA (COMPLETE SUBMISSION)
+  // =========================
   static saveESGData(data) {
-    return this.request('/esg/data', {
-      method: 'POST',
-      body: JSON.stringify(data)
+    return this.request("/esg/data", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
@@ -98,9 +109,66 @@ class APIService {
     return this.request(`/esg/kpis/${userId}`);
   }
 
-  // Analytics Data
+  // =========================
+  // ANALYTICS DATA
+  // =========================
   static getAnalyticsData(userId) {
     return this.request(`/esg/analytics/${userId}`);
+  }
+
+  // =========================
+  // ERP Integration
+  // =========================
+  static configureERP(config) {
+    return this.request('/integrations/erp/configure', {
+      method: 'POST',
+      body: JSON.stringify(config)
+    });
+  }
+
+  static syncERP() {
+    return this.request('/integrations/erp/sync', { method: 'POST' });
+  }
+
+  // =========================
+  // HR Integration  
+  // =========================
+  static configureHR(config) {
+    return this.request('/integrations/hr/configure', {
+      method: 'POST',
+      body: JSON.stringify(config)
+    });
+  }
+
+  static syncHR() {
+    return this.request('/integrations/hr/sync', { method: 'POST' });
+  }
+
+  // =========================
+  // Integration Status
+  // =========================
+  static getIntegrationStatus() {
+    return this.request('/integrations/status');
+  }
+
+  // =========================
+  // Compliance Validation
+  // =========================
+  static validateCompliance(data) {
+    return this.request('/compliance/validate', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // =========================
+  // GHG Calculations
+  // =========================
+  static calculateGHG(data) {
+    return this.request('/ghg/calculate', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
 }
 

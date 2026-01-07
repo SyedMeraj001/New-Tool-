@@ -9,6 +9,7 @@ const Regulatory = () => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const theme = getThemeClasses(isDark);
+  const [currentUser, setCurrentUser] = useState(null);
   const [selectedRegulation, setSelectedRegulation] = useState(null);
   const [animateCards, setAnimateCards] = useState(false);
   const [showComplianceModal, setShowComplianceModal] = useState(false);
@@ -70,6 +71,27 @@ const Regulatory = () => {
   ]);
 
   useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        navigate('/login');
+      }
+    };
+    fetchCurrentUser();
+  }, [navigate]);
+
+  useEffect(() => {
     setAnimateCards(true);
   }, []);
 
@@ -113,8 +135,7 @@ const Regulatory = () => {
     }`}>
       <ProfessionalHeader 
         onLogout={handleLogout}
-        isDark={isDark}
-        toggleTheme={toggleTheme}
+        currentUser={currentUser}
       />
 
       <main className="max-w-7xl mx-auto p-6">

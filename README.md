@@ -50,3 +50,6 @@ db dump
 export PGPASSWORD=Es@2025
 psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE esg_dashboard;" || echo "DB already exists"
 psql -U postgres -h localhost -p 5432 -d esg_dashboard -f backend/database/pia_db_dump.sql
+
+
+when 

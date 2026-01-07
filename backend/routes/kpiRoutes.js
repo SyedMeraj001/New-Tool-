@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // routes/kpiRoutes.js - KPI Dashboard API (ES Modules)
 import express from 'express';
 import { sequelize } from '../models/index.js';
@@ -31,9 +32,33 @@ router.get('/:companyId', async (_req, res) => {
         totalEntries: total
       }
     });
+=======
+import express from "express";
+
+const router = express.Router();
+
+// Get KPIs for a user
+router.get("/:email", async (req, res) => {
+  try {
+    // Mock KPI data
+    const mockKPIs = {
+      totalEmissions: 1250,
+      energyConsumption: 850,
+      wasteReduction: 25,
+      employeeSatisfaction: 78,
+      diversityIndex: 65,
+      complianceScore: 92
+    };
+    
+    res.json({ success: true, data: mockKPIs });
+>>>>>>> 44521cd (updated by sudha)
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
+<<<<<<< HEAD
 export default router;
+=======
+export default router;
+>>>>>>> 44521cd (updated by sudha)

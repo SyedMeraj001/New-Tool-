@@ -4,6 +4,8 @@ import { getThemeClasses } from './utils/themeUtils';
 import ProfessionalHeader from './components/ProfessionalHeader';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 const Stakeholders = () => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
@@ -14,6 +16,7 @@ const Stakeholders = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showIconDropdown, setShowIconDropdown] = useState(false);
   const [editingStakeholder, setEditingStakeholder] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStakeholder, setNewStakeholder] = useState({
     name: '',
     type: 'External',
@@ -30,86 +33,7 @@ const Stakeholders = () => {
     icon: '👤'
   });
   
-  const [stakeholders, setStakeholders] = useState([
-    { 
-      id: 1, 
-      name: 'Investors & Shareholders', 
-      type: 'Financial', 
-      engagement: 'High', 
-      lastContact: '2024-01-15',
-      icon: '💰',
-      priority: 'Critical',
-      description: 'Financial stakeholders including institutional investors, retail shareholders, and financial analysts',
-      concerns: ['Financial Performance', 'ESG Risks', 'Long-term Strategy'],
-      nextAction: 'Quarterly Earnings Call',
-      satisfaction: 85
-    },
-    { 
-      id: 2, 
-      name: 'Employees & Workforce', 
-      type: 'Internal', 
-      engagement: 'Medium', 
-      lastContact: '2024-01-10',
-      icon: '👥',
-      priority: 'High',
-      description: 'Internal workforce including full-time employees, contractors, and union representatives',
-      concerns: ['Work-Life Balance', 'Career Development', 'Compensation'],
-      nextAction: 'Employee Survey Review',
-      satisfaction: 72
-    },
-    { 
-      id: 3, 
-      name: 'Customers & Clients', 
-      type: 'External', 
-      engagement: 'High', 
-      lastContact: '2024-01-12',
-      icon: '🛍️',
-      priority: 'Critical',
-      description: 'End customers, business clients, and consumer advocacy groups',
-      concerns: ['Product Quality', 'Sustainability', 'Customer Service'],
-      nextAction: 'Customer Advisory Board',
-      satisfaction: 88
-    },
-    { 
-      id: 4, 
-      name: 'Regulators & Government', 
-      type: 'Compliance', 
-      engagement: 'Medium', 
-      lastContact: '2024-01-08',
-      icon: '🏛️',
-      priority: 'High',
-      description: 'Government agencies, regulatory bodies, and policy makers',
-      concerns: ['Regulatory Compliance', 'Environmental Impact', 'Tax Policy'],
-      nextAction: 'Regulatory Filing Review',
-      satisfaction: 78
-    },
-    { 
-      id: 5, 
-      name: 'Local Communities', 
-      type: 'Social', 
-      engagement: 'Low', 
-      lastContact: '2024-01-05',
-      icon: '🏘️',
-      priority: 'Medium',
-      description: 'Local communities, NGOs, and community leaders in operational areas',
-      concerns: ['Environmental Impact', 'Job Creation', 'Community Investment'],
-      nextAction: 'Community Town Hall',
-      satisfaction: 65
-    },
-    { 
-      id: 6, 
-      name: 'Suppliers & Partners', 
-      type: 'Business', 
-      engagement: 'Medium', 
-      lastContact: '2024-01-14',
-      icon: '🤝',
-      priority: 'High',
-      description: 'Supply chain partners, vendors, and strategic business partners',
-      concerns: ['Payment Terms', 'Contract Renewals', 'Sustainability Standards'],
-      nextAction: 'Supplier Assessment',
-      satisfaction: 80
-    }
-  ]);
+  const [stakeholders, setStakeholders] = useState([]);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -134,7 +58,136 @@ const Stakeholders = () => {
 
   useEffect(() => {
     setAnimationClass('animate-fade-in');
+    loadStakeholders();
   }, []);
+
+  const loadStakeholders = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stakeholders`);
+      const result = await response.json();
+      if (result.success) {
+        setStakeholders(result.data.map(s => ({
+          ...s,
+          engagement: s.engagement_level,
+          lastContact: s.last_contact,
+          concerns: s.key_concerns ? s.key_concerns.split(',').map(c => c.trim()) : [],
+          nextAction: s.next_action,
+          contactEmail: s.contact_email,
+          stakeholderPercentage: s.stakeholder_percentage,
+          satisfaction: s.satisfaction || Math.floor(Math.random() * 30) + 60
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to load stakeholders:', error);
+      setStakeholders([]); // Show empty if API fails
+    }
+  };
+
+  const saveStakeholder = async (stakeholderData) => {
+    try {
+      const payload = {
+        name: stakeholderData.name,
+        type: stakeholderData.type,
+        engagement_level: stakeholderData.engagement,
+        priority: stakeholderData.priority,
+        description: stakeholderData.description,
+        key_concerns: Array.isArray(stakeholderData.concerns) 
+          ? stakeholderData.concerns.join(', ') 
+          : stakeholderData.concerns,
+        next_action: stakeholderData.nextAction,
+        contact_email: stakeholderData.contactEmail,
+        department: stakeholderData.department,
+        stakeholder_percentage: stakeholderData.stakeholderPercentage,
+        icon: stakeholderData.icon
+      };
+
+      console.log('Sending payload:', payload);
+
+      const response = await fetch(`${API_BASE_URL}/stakeholders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      console.log('API Response:', result);
+      
+      if (result.success) {
+        await loadStakeholders(); // Reload from database
+        return true;
+      } else {
+        console.error('Failed to save stakeholder:', result.error);
+        alert(`Save failed: ${result.error}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error saving stakeholder:', error);
+      alert(`Network error: ${error.message}`);
+      return false;
+    }
+  };
+
+  const updateStakeholder = async (id, stakeholderData) => {
+    try {
+      const payload = {
+        name: stakeholderData.name,
+        type: stakeholderData.type,
+        engagement_level: stakeholderData.engagement,
+        priority: stakeholderData.priority,
+        description: stakeholderData.description,
+        key_concerns: Array.isArray(stakeholderData.concerns) 
+          ? stakeholderData.concerns.join(', ') 
+          : stakeholderData.concerns,
+        next_action: stakeholderData.nextAction,
+        contact_email: stakeholderData.contactEmail,
+        department: stakeholderData.department,
+        stakeholder_percentage: stakeholderData.stakeholderPercentage,
+        icon: stakeholderData.icon
+      };
+
+      const response = await fetch(`${API_BASE_URL}/stakeholders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        await loadStakeholders(); // Reload from database
+        return true;
+      } else {
+        console.error('Failed to update stakeholder:', result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating stakeholder:', error);
+      return false;
+    }
+  };
+
+  const deleteStakeholder = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stakeholders/${id}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        await loadStakeholders(); // Reload from database
+        return true;
+      } else {
+        console.error('Failed to delete stakeholder:', result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting stakeholder:', error);
+      return false;
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -271,64 +324,49 @@ const Stakeholders = () => {
                   </button>
                 </div>
                 
-                <form onSubmit={(e) => {
+                <form onSubmit={async (e) => {
                   e.preventDefault();
+                  
+                  if (isSubmitting) return; // Prevent double submission
+                  setIsSubmitting(true);
+                  
+                  const stakeholderData = {
+                    name: newStakeholder.name,
+                    type: newStakeholder.type,
+                    engagement: newStakeholder.engagement,
+                    priority: newStakeholder.priority,
+                    description: newStakeholder.description,
+                    concerns: newStakeholder.concerns.split(',').map(c => c.trim()).filter(c => c),
+                    nextAction: newStakeholder.nextAction,
+                    contactEmail: newStakeholder.contactEmail,
+                    department: newStakeholder.department,
+                    influence: newStakeholder.influence,
+                    interest: newStakeholder.interest,
+                    stakeholderPercentage: newStakeholder.stakeholderPercentage,
+                    icon: newStakeholder.icon
+                  };
+
+                  let success = false;
                   if (editingStakeholder) {
-                    // Update existing stakeholder - only modify changed fields
-                    const updatedStakeholders = stakeholders.map(s => 
-                      s.id === editingStakeholder.id 
-                        ? {
-                            ...s, // Keep all existing data
-                            // Only update fields that may have changed
-                            ...(newStakeholder.name !== s.name && { name: newStakeholder.name }),
-                            ...(newStakeholder.type !== s.type && { type: newStakeholder.type }),
-                            ...(newStakeholder.engagement !== s.engagement && { engagement: newStakeholder.engagement }),
-                            ...(newStakeholder.priority !== s.priority && { priority: newStakeholder.priority }),
-                            ...(newStakeholder.description !== s.description && { description: newStakeholder.description }),
-                            ...(newStakeholder.concerns !== (Array.isArray(s.concerns) ? s.concerns.join(', ') : s.concerns || '') && { 
-                              concerns: newStakeholder.concerns.split(',').map(c => c.trim()).filter(c => c) 
-                            }),
-                            ...(newStakeholder.nextAction !== s.nextAction && { nextAction: newStakeholder.nextAction }),
-                            ...(newStakeholder.contactEmail !== (s.contactEmail || '') && { contactEmail: newStakeholder.contactEmail }),
-                            ...(newStakeholder.department !== (s.department || '') && { department: newStakeholder.department }),
-                            ...(newStakeholder.influence !== (s.influence || 'Medium') && { influence: newStakeholder.influence }),
-                            ...(newStakeholder.interest !== (s.interest || 'Medium') && { interest: newStakeholder.interest }),
-                            ...(newStakeholder.stakeholderPercentage !== (s.stakeholderPercentage || 0) && { stakeholderPercentage: newStakeholder.stakeholderPercentage }),
-                            ...(newStakeholder.icon !== s.icon && { icon: newStakeholder.icon })
-                          }
-                        : s
-                    );
-                    setStakeholders(updatedStakeholders);
+                    success = await updateStakeholder(editingStakeholder.id, stakeholderData);
                   } else {
-                    // Add new stakeholder
-                    const stakeholder = {
-                      id: stakeholders.length + 1,
-                      name: newStakeholder.name,
-                      type: newStakeholder.type,
-                      engagement: newStakeholder.engagement,
-                      priority: newStakeholder.priority,
-                      description: newStakeholder.description,
-                      concerns: newStakeholder.concerns.split(',').map(c => c.trim()).filter(c => c),
-                      nextAction: newStakeholder.nextAction,
-                      lastContact: new Date().toISOString().split('T')[0],
-                      icon: newStakeholder.icon,
-                      satisfaction: Math.floor(Math.random() * 30) + 60,
-                      contactEmail: newStakeholder.contactEmail,
-                      department: newStakeholder.department,
-                      influence: newStakeholder.influence,
-                      interest: newStakeholder.interest,
-                      stakeholderPercentage: newStakeholder.stakeholderPercentage
-                    };
-                    setStakeholders([...stakeholders, stakeholder]);
+                    success = await saveStakeholder(stakeholderData);
                   }
-                  setNewStakeholder({
-                    name: '', type: 'External', engagement: 'Medium', priority: 'Medium',
-                    description: '', concerns: '', nextAction: '', contactEmail: '',
-                    department: '', influence: 'Medium', interest: 'Medium', stakeholderPercentage: 0,
-                    icon: '👤'
-                  });
-                  setEditingStakeholder(null);
-                  setShowAddForm(false);
+
+                  if (success) {
+                    setNewStakeholder({
+                      name: '', type: 'External', engagement: 'Medium', priority: 'Medium',
+                      description: '', concerns: '', nextAction: '', contactEmail: '',
+                      department: '', influence: 'Medium', interest: 'Medium', stakeholderPercentage: 0,
+                      icon: '👤'
+                    });
+                    setEditingStakeholder(null);
+                    setShowAddForm(false);
+                  } else {
+                    alert('Failed to save stakeholder. Please try again.');
+                  }
+                  
+                  setIsSubmitting(false);
                 }} className="space-y-4">
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -539,13 +577,16 @@ const Stakeholders = () => {
                   <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
+                      disabled={isSubmitting}
                       className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                        isDark 
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
-                          : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                        isSubmitting
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : isDark 
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
                       } shadow-lg hover:shadow-xl transform hover:scale-105`}
                     >
-                      ✅ {editingStakeholder ? 'Update Stakeholder' : 'Add Stakeholder'}
+                      {isSubmitting ? '⏳ Processing...' : `✅ ${editingStakeholder ? 'Update Stakeholder' : 'Add Stakeholder'}`}
                     </button>
                     <button
                       type="button"
@@ -601,9 +642,11 @@ const Stakeholders = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        setStakeholders(stakeholders.filter(s => s.id !== stakeholder.id));
+                        if (confirm('Are you sure you want to delete this stakeholder?')) {
+                          await deleteStakeholder(stakeholder.id);
+                        }
                       }}
                       className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                         isDark 
@@ -724,52 +767,95 @@ const Stakeholders = () => {
                       </div>
                     )}
 
-                    <div className="flex gap-2 pt-2">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (stakeholder.contactEmail) {
-                            window.location.href = `mailto:${stakeholder.contactEmail}`;
-                          } else {
-                            alert('No email address available for this stakeholder');
-                          }
-                        }}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                        isDark 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}>
-                        📞 Contact
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingStakeholder(stakeholder);
-                          setNewStakeholder({
-                            name: stakeholder.name,
-                            type: stakeholder.type,
-                            engagement: stakeholder.engagement,
-                            priority: stakeholder.priority,
-                            description: stakeholder.description,
-                            concerns: Array.isArray(stakeholder.concerns) ? stakeholder.concerns.join(', ') : stakeholder.concerns || '',
-                            nextAction: stakeholder.nextAction,
-                            contactEmail: stakeholder.contactEmail || '',
-                            department: stakeholder.department || '',
-                            influence: stakeholder.influence || 'Medium',
-                            interest: stakeholder.interest || 'Medium',
-                            stakeholderPercentage: stakeholder.stakeholderPercentage || 0,
-                            icon: stakeholder.icon
-                          });
-                          setShowAddForm(true);
-                        }}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                          isDark 
-                            ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                            : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                        }`}
-                      >
-                        📝 Update
-                      </button>
+                    <div className="space-y-2 pt-2">
+                      {(stakeholder.contactEmail || stakeholder.contact_email) ? (
+                        <>
+                          <div className={`text-xs ${theme.text.secondary}`}>
+                            📧 {stakeholder.contactEmail || stakeholder.contact_email}
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const email = stakeholder.contactEmail || stakeholder.contact_email;
+                                window.open(`https://mail.google.com/mail/u/0/?view=cm&to=${email}`, '_blank');
+                              }}
+                              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                              isDark 
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}>
+                              📧 Contact
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingStakeholder(stakeholder);
+                                setNewStakeholder({
+                                  name: stakeholder.name,
+                                  type: stakeholder.type,
+                                  engagement: stakeholder.engagement,
+                                  priority: stakeholder.priority,
+                                  description: stakeholder.description,
+                                  concerns: Array.isArray(stakeholder.concerns) ? stakeholder.concerns.join(', ') : stakeholder.concerns || '',
+                                  nextAction: stakeholder.nextAction,
+                                  contactEmail: stakeholder.contactEmail || '',
+                                  department: stakeholder.department || '',
+                                  influence: stakeholder.influence || 'Medium',
+                                  interest: stakeholder.interest || 'Medium',
+                                  stakeholderPercentage: stakeholder.stakeholderPercentage || 0,
+                                  icon: stakeholder.icon
+                                });
+                                setShowAddForm(true);
+                              }}
+                              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                isDark 
+                                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                              }`}
+                            >
+                              📝 Update
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex gap-2">
+                          <div className={`flex-1 py-2 px-4 rounded-lg text-sm text-center ${
+                            isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+                          }`}>
+                            No email available
+                          </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingStakeholder(stakeholder);
+                              setNewStakeholder({
+                                name: stakeholder.name,
+                                type: stakeholder.type,
+                                engagement: stakeholder.engagement,
+                                priority: stakeholder.priority,
+                                description: stakeholder.description,
+                                concerns: Array.isArray(stakeholder.concerns) ? stakeholder.concerns.join(', ') : stakeholder.concerns || '',
+                                nextAction: stakeholder.nextAction,
+                                contactEmail: stakeholder.contactEmail || '',
+                                department: stakeholder.department || '',
+                                influence: stakeholder.influence || 'Medium',
+                                interest: stakeholder.interest || 'Medium',
+                                stakeholderPercentage: stakeholder.stakeholderPercentage || 0,
+                                icon: stakeholder.icon
+                              });
+                              setShowAddForm(true);
+                            }}
+                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                              isDark 
+                                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                            }`}
+                          >
+                            📝 Update
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

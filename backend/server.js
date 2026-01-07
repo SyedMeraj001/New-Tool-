@@ -44,8 +44,24 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+<<<<<<< HEAD
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+=======
+// ================================
+// Routes (ALL DEFAULT IMPORTS)
+// ================================
+import companyRoutes from "./routes/companyRoutes.js";
+import environmentalRoutes from "./routes/environmentalRoutes.js";
+import socialRoutes from "./routes/socialRoutes.js";
+import governanceRoutes from "./routes/governanceRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import submitRoutes from "./routes/submitRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+import stakeholderRoutes from "./routes/stakeholderRoutes.js";
+import kpiRoutes from "./routes/kpiRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+>>>>>>> 44521cd (updated by sudha)
 
 // API Info
 app.get('/', (_req, res) => {
@@ -61,9 +77,34 @@ app.get('/', (_req, res) => {
   });
 });
 
+<<<<<<< HEAD
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+=======
+// Test stakeholder endpoint
+app.get("/test-stakeholder", async (req, res) => {
+  try {
+    const Stakeholder = (await import("./models/stakeholder.js")).default;
+    const count = await Stakeholder.count();
+    res.json({ message: "Stakeholder model works", count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ESG Steps
+app.use("/api/company", companyRoutes);
+app.use("/api/environmental", environmentalRoutes);
+app.use("/api/social", socialRoutes);
+app.use("/api/governance", governanceRoutes);
+app.use("/api/review", reviewRoutes);
+app.use("/api/submit", submitRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/stakeholders", stakeholderRoutes);
+app.use("/api/kpi", kpiRoutes);
+app.use("/api/reports", reportRoutes);
+>>>>>>> 44521cd (updated by sudha)
 
 // ================================
 // VENKAT's Routes

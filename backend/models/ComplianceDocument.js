@@ -1,18 +1,45 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../server");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
 const ComplianceDocument = sequelize.define("ComplianceDocument", {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  name: { type: DataTypes.STRING, allowNull: false },
-  category: { type: DataTypes.STRING },
-  priority: { type: DataTypes.STRING },
-  uploaded_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-  due_date: { type: DataTypes.DATE },
-  progress: { type: DataTypes.INTEGER },
-  status: { type: DataTypes.STRING }
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  file_name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  priority: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  due_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  progress: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'Pending'
+  }
 }, {
   tableName: "compliance_documents",
-  timestamps: false,
+  timestamps: true,
+  createdAt: 'uploaded_at',
+  updatedAt: 'updated_at'
 });
 
-module.exports = ComplianceDocument;
+export default ComplianceDocument;

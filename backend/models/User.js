@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
@@ -11,7 +10,8 @@ const User = sequelize.define("User", {
 
   fullName: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'full_name'
   },
 
   email: {
@@ -31,7 +31,8 @@ const User = sequelize.define("User", {
   },
 
   contactNumber: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    field: 'contact_number'
   },
 
   contacts: {
@@ -41,31 +42,20 @@ const User = sequelize.define("User", {
 
   profilePhoto: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    field: 'profile_photo'
   },
 
   isApproved: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true
+    defaultValue: true,
+    field: 'is_approved'
   }
+}, {
+  tableName: 'users',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 export default User;
-=======
-const { DataTypes } = require("sequelize");
-const sequelize = require("../server");
-
-const User = sequelize.define("User", {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  name: { type: DataTypes.STRING, allowNull: false },
-  email: { type: DataTypes.STRING, allowNull: false, unique: true },
-  password: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.STRING, defaultValue: 'user' },
-  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-}, {
-  tableName: "users",
-  timestamps: false,
-});
-
-module.exports = User;
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c

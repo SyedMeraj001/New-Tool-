@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
-import mime from "mime"; // npm install mime
+import mime from "mime";
 import pool from "../db.js";
 
 const router = express.Router();
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* ===============================
-   GET ALL DOCUMENTS
+   GET ALL UPLOADED DOCUMENTS
 ================================ */
 router.get("/", async (req, res) => {
   try {
@@ -36,17 +36,32 @@ router.get("/", async (req, res) => {
 
 /* ===============================
    UPLOAD DOCUMENT
+   Requires requirement_id
 ================================ */
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+    const { requirement_id } = req.body;
+
+    if (!req.file || !requirement_id) {
+      return res.status(400).json({ message: "File or requirement missing" });
     }
 
+    const requirement = await pool.query(
+      "SELECT name, category FROM compliance_master WHERE id = $1",
+      [requirement_id]
+    );
+
+    if (requirement.rows.length === 0) {
+      return res.status(400).json({ message: "Invalid requirement" });
+    }
+
+    const { name, category } = requirement.rows[0];
+
     await pool.query(
-      `INSERT INTO compliance_documents (name, file_name, status, category)
-       VALUES ($1, $2, 'Pending', 'Environmental')`,
-      [req.file.originalname, req.file.filename]
+      `INSERT INTO compliance_documents
+      (name, file_name, status, category, requirement_id)
+      VALUES ($1, $2, 'Pending', $3, $4)`,
+      [name, req.file.filename, category, requirement_id]
     );
 
     res.json({ success: true });
@@ -57,7 +72,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 /* ===============================
-   FILE PREVIEW (OPEN IN BROWSER)
+   FILE PREVIEW
 ================================ */
 router.get("/preview/:filename", (req, res) => {
   const filePath = path.join(process.cwd(), "uploads", req.params.filename);
@@ -66,14 +81,8 @@ router.get("/preview/:filename", (req, res) => {
     return res.status(404).json({ message: "File not found" });
   }
 
-  // Determine MIME type
-  const mimeType = mime.getType(filePath) || "application/octet-stream";
-
-  res.setHeader("Content-Type", mimeType);
-  res.setHeader(
-    "Content-Disposition",
-    `inline; filename="${req.params.filename}"`
-  );
+  res.setHeader("Content-Type", mime.getType(filePath) || "application/octet-stream");
+  res.setHeader("Content-Disposition", "inline");
 
   res.sendFile(filePath);
 });
@@ -82,31 +91,23 @@ router.get("/preview/:filename", (req, res) => {
    DELETE DOCUMENT
 ================================ */
 router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const result = await pool.query(
+    const doc = await pool.query(
       "SELECT file_name FROM compliance_documents WHERE id = $1",
-      [id]
+      [req.params.id]
     );
 
-    if (result.rows.length === 0) {
+    if (!doc.rows.length) {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    const fileName = result.rows[0].file_name;
-
     await pool.query(
       "DELETE FROM compliance_documents WHERE id = $1",
-      [id]
+      [req.params.id]
     );
 
-    if (fileName) {
-      const filePath = path.join(process.cwd(), "uploads", fileName);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
+    const filePath = path.join(process.cwd(), "uploads", doc.rows[0].file_name);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
     res.json({ success: true });
   } catch (err) {
@@ -116,10 +117,9 @@ router.delete("/:id", async (req, res) => {
 });
 
 /* ===============================
-   UPDATE STATUS (SUPER ADMIN)
+   UPDATE STATUS
 ================================ */
 router.patch("/:id/status", async (req, res) => {
-  const { id } = req.params;
   const { status } = req.body;
 
   if (!["Approved", "Pending"].includes(status)) {
@@ -129,44 +129,48 @@ router.patch("/:id/status", async (req, res) => {
   try {
     await pool.query(
       "UPDATE compliance_documents SET status = $1 WHERE id = $2",
-      [status, id]
+      [status, req.params.id]
     );
+
     res.json({ success: true });
   } catch (err) {
     console.error("STATUS UPDATE ERROR:", err.message);
-    res.status(500).json({ message: "Status update failed" });
+    res.status(500).json({ message: "Update failed" });
   }
 });
 
 /* ===============================
-   DOWNLOAD DOCUMENT (ORIGINAL NAME)
+   COMPLIANCE REQUIREMENTS
 ================================ */
 router.get("/requirements", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT 
+      SELECT
         m.id,
         m.framework,
         m.name,
         m.category,
         m.due_date,
         CASE
-          WHEN d.id IS NOT NULL THEN 'Completed'
+          WHEN EXISTS (
+            SELECT 1 FROM compliance_documents d
+            WHERE d.requirement_id = m.id AND d.status = 'Approved'
+          ) THEN 'Completed'
           WHEN CURRENT_DATE > m.due_date THEN 'Overdue'
           ELSE 'Pending'
         END AS status
       FROM compliance_master m
-      LEFT JOIN compliance_documents d
-        ON d.name = m.name
+      ORDER BY m.id
     `);
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch compliance requirements" });
+    console.error("REQUIREMENTS FETCH ERROR:", err.message);
+    res.status(500).json({ message: "Failed to fetch compliance requirements" });
   }
 });
 
+<<<<<<< HEAD
 
 /* ===============================
    GET REGULATORY FRAMEWORKS
@@ -242,4 +246,6 @@ router.get("/regulations", async (req, res) => {
   }
 });
 
+=======
+>>>>>>> 2a35955 (compliance by Revathi)
 export default router;

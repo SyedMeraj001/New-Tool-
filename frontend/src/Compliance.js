@@ -48,6 +48,7 @@ const Compliance = () => {
 
   const [documents, setDocuments] = useState([]);
   const [requirements, setRequirements] = useState([]);
+  const [selectedRequirement, setSelectedRequirement] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [dragActive, setDragActive] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -89,15 +90,36 @@ const Compliance = () => {
     );
   }, []);
 
+  /* ===================== STATUS CALCULATION ===================== */
+  const getRequirementStatus = (req) => {
+    const relatedDoc = documents.find((d) => d.requirement_id === req.id);
+    const isOverdue = new Date(req.due_date) < new Date();
+    if (!relatedDoc) return isOverdue ? "Overdue" : "Pending";
+    return relatedDoc.status === "Approved" ? "Completed" : relatedDoc.status;
+  };
+
+  const computedRequirements = requirements.map((req) => ({
+    ...req,
+    status: getRequirementStatus(req),
+  }));
+
   /* ===================== ACTIONS ===================== */
   const handleFileUpload = async (file) => {
-    if (!file) return;
+    if (!file || !selectedRequirement) return alert("Select requirement and file");
     const formData = new FormData();
     formData.append("file", file);
-    await fetch(`${API_URL}/api/compliance/upload`, {
+    formData.append("requirement_id", selectedRequirement);
+
+    const res = await fetch(`${API_URL}/api/compliance/upload`, {
       method: "POST",
       body: formData,
     });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.message || "Upload failed");
+    }
+
     fetchDocuments();
     fetchRequirements();
   };
@@ -138,30 +160,41 @@ const Compliance = () => {
           <Metric
             icon={<FaCheckCircle />}
             label="Completed"
-            value={requirements.filter(r => r.status === "Completed").length}
+            value={computedRequirements.filter((r) => r.status === "Completed").length}
             color="text-green-500"
           />
           <Metric
             icon={<FaClock />}
             label="Pending"
-            value={requirements.filter(r => r.status === "Pending").length}
+            value={computedRequirements.filter((r) => r.status === "Pending").length}
             color="text-yellow-500"
           />
           <Metric
             icon={<FaExclamationTriangle />}
             label="Overdue"
-            value={requirements.filter(r => r.status === "Overdue").length}
+            value={computedRequirements.filter((r) => r.status === "Overdue").length}
             color="text-red-500"
           />
-          <Metric
-            icon="📊"
-            label="Total"
-            value={requirements.length}
-          />
+          <Metric icon="📊" label="Total" value={computedRequirements.length} />
         </div>
 
         {/* ===================== UPLOAD ===================== */}
         <div className="upload-zone-3d rounded-2xl p-8 border-2 border-dashed mb-8 bg-white dark:bg-gray-900 dark:border-gray-700">
+          <div className="text-center mb-4">
+            <select
+              value={selectedRequirement}
+              onChange={(e) => setSelectedRequirement(e.target.value)}
+              className="p-2 border rounded w-full max-w-sm"
+            >
+              <option value="">Select Requirement</option>
+              {requirements.map((req) => (
+                <option key={req.id} value={req.id}>
+                  {req.name} ({req.category})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="text-center">
             <FaFileUpload className="mx-auto text-4xl mb-3 text-gray-700 dark:text-gray-300" />
             <p className="mb-3">Drag & drop files or click to upload</p>
@@ -178,14 +211,11 @@ const Compliance = () => {
 
         {/* ===================== COMPLIANCE REQUIREMENTS ===================== */}
         <div className="rounded-2xl p-6 border shadow mb-8 bg-white dark:bg-gray-900 dark:border-gray-700">
-          <h2 className="text-lg font-semibold mb-4">
-            Compliance Requirements
-          </h2>
-
+          <h2 className="text-lg font-semibold mb-4">Compliance Requirements</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {requirements.map((req) => (
+            {computedRequirements.map((req) => (
               <div
-                key={req.id}
+                key={`req-${req.id}`}
                 className="compliance-item-3d p-4 rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-700 flex justify-between"
               >
                 <div>
@@ -193,13 +223,11 @@ const Compliance = () => {
                     {categoryIcons[req.category]} {req.name}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {req.framework} • {req.category} • Due {req.due_date}
+                    {req.framework} • {req.category} • Due{" "}
+                    {new Date(req.due_date).toLocaleDateString("en-IN")}
                   </p>
                 </div>
-
-                <span
-                  className={`px-2 py-1 text-xs border ${statusColors[req.status]}`}
-                >
+                <span className={`px-2 py-1 text-xs border ${statusColors[req.status]}`}>
                   {req.status}
                 </span>
               </div>
@@ -210,10 +238,9 @@ const Compliance = () => {
         {/* ===================== DOCUMENT HISTORY ===================== */}
         <div className="rounded-2xl p-6 border shadow bg-white dark:bg-gray-900 dark:border-gray-700">
           <h2 className="text-lg font-semibold mb-4">Document History</h2>
-
           {documents.map((doc) => (
             <div
-              key={doc.id}
+              key={`doc-${doc.id}`}
               className="compliance-item-3d p-4 mb-3 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 flex justify-between"
             >
               <div>
@@ -222,13 +249,9 @@ const Compliance = () => {
                   {doc.category} • {doc.status}
                 </p>
               </div>
-
               <div className="flex gap-3 items-center">
                 {doc.file_name && (
-                  <FaEye
-                    onClick={() => handlePreview(doc.file_name)}
-                    className="cursor-pointer"
-                  />
+                  <FaEye onClick={() => handlePreview(doc.file_name)} className="cursor-pointer" />
                 )}
                 {doc.file_name && (
                   <a href={`${API_URL}/api/compliance/download/${doc.id}`}>

@@ -8,6 +8,7 @@ import { sequelize } from './models/index.js';
 import corsMiddleware from './middleware/cors.js';
 import errorHandler from './middleware/errorHandler.js';
 
+<<<<<<< HEAD
 // Your routes (Venkat)
 import workflowRoutes from './routes/workflowRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
@@ -16,6 +17,11 @@ import reportsRoutes from './routes/reportsRoutes.js';
 import kpiRoutes from './routes/kpiRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
+=======
+// Routes
+import complianceRoutes from "./routes/compliance.js";
+import kpisRoutes from "./routes/kpis.js"; // keep this if you still have kpis
+>>>>>>> 2a35955 (compliance by Revathi)
 
 // Team routes
 import authTeamRoutes from './routes/auth.js';
@@ -45,8 +51,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+<<<<<<< HEAD
 app.get('/', (_req, res) => res.json({ message: 'ESG Dashboard API', status: 'healthy' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+=======
+// Serve uploaded files
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+>>>>>>> 2a35955 (compliance by Revathi)
 
 app.use('/api/workflows', workflowRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -83,4 +94,15 @@ app.listen(PORT, async () => {
   }
 });
 
+<<<<<<< HEAD
 export default app;
+=======
+// API routes
+app.use("/api/compliance", complianceRoutes);
+app.use("/api/kpis", kpisRoutes); // keep only the routes that exist
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+>>>>>>> 2a35955 (compliance by Revathi)

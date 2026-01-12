@@ -1,6 +1,7 @@
 // backend/controllers/companyController.js (ESM)
 
 import Company from "../models/Company.js";
+import { createComplianceRecords } from "../utils/complianceUpdater.js";
 
 // SAVE / UPDATE COMPANY
 const saveCompany = async (req, res) => {
@@ -15,11 +16,19 @@ const saveCompany = async (req, res) => {
     });
 
     let company;
+    let isNewCompany = false;
 
     if (existing) {
       company = await existing.update(req.body);
     } else {
       company = await Company.create(req.body);
+      isNewCompany = true;
+    }
+
+    // Create compliance records for new companies
+    if (isNewCompany) {
+      console.log('Creating compliance records for new company:', company.id);
+      await createComplianceRecords(company.id, req.body);
     }
 
     res.status(200).json({

@@ -1,27 +1,27 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
-
-// Routes
-import complianceRoutes from "./routes/compliance.js";
-import requirementsRoutes from "./routes/requirements.js";
-import kpisRoutes from "./routes/kpis.js";
-
-dotenv.config();
-
-<<<<<<< HEAD
-import express from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
-import path from "path";
 import { fileURLToPath } from "url";
+import { createServer } from "http";
+import { initWebSocket } from "./websocket.js";
+import { simulateUpdates } from "./realtime-simulator.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config();
+
 // ✅ Shared Sequelize instance
 import sequelize from "./config/db.js";
+
+// Import models for sync
+import "./models/Company.js";
+import "./models/Environmental.js";
+import "./models/Social.js";
+import "./models/Governance.js";
+import "./models/Regulatory.js";
 
 // ================================
 // Routes (ESM imports)
@@ -34,6 +34,7 @@ import governanceRoutes from "./routes/governanceRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import submitRoutes from "./routes/submitRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import regulatoryRoutes from "./routes/regulatoryRoutes.js";
 
 // ✅ Seed Super Admin
 import { seedSuperAdmin } from "./seed/superAdminSeed.js";
@@ -41,12 +42,18 @@ import { seedSuperAdmin } from "./seed/superAdminSeed.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import kpiRoutes from "./routes/kpiRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import complianceRoutes from "./routes/complianceRoutes.js";
+import testRoutes from "./routes/testRoutes.js";
 
 // ================================
 // App Init
 // ================================
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Initialize WebSocket
+initWebSocket(server);
 
 // ================================
 // Middleware
@@ -71,6 +78,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/kpi", kpiRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/compliance", complianceRoutes);
+app.use("/api/test", testRoutes);
+app.use("/api/regulatory", regulatoryRoutes);
 
 // ESG steps
 app.use("/api/company", companyRoutes);
@@ -100,36 +110,16 @@ app.get("/", (req, res) => {
     // 🔥 THIS WAS MISSING (SAFE ADDITION)
     await seedSuperAdmin();
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📡 WebSocket server ready`);
+      
+      // Start real-time simulation
+      simulateUpdates();
+      console.log(`⚡ Real-time updates started`);
     });
   } catch (error) {
     console.error("❌ Database error:", error.message);
     process.exit(1);
   }
 })();
-=======
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
-app.use(express.json());
-
-/* ✅ ADD THIS LINE (VERY IMPORTANT) */
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-// Health check
-app.get("/", (req, res) => {
-  res.json({ message: "ESG Dashboard Backend is running 🚀" });
-});
-
-// API routes
-app.use("/api/compliance", complianceRoutes);
-app.use("/api/requirements", requirementsRoutes);
-app.use("/api/kpis", kpisRoutes);
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c

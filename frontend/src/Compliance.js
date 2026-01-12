@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaFileUpload,
   FaCheckCircle,
@@ -49,9 +49,10 @@ const Compliance = () => {
   const [documents, setDocuments] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-<<<<<<< HEAD
-  const [dragActive, setDragActive] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [validationResults, setValidationResults] = useState(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [selectedFramework, setSelectedFramework] = useState('GRI');
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -70,7 +71,6 @@ const Compliance = () => {
     };
     fetchCurrentUser();
   }, []);
-=======
 
   /* ===================== FETCH DATA ===================== */
   const fetchDocuments = async () => {
@@ -84,7 +84,6 @@ const Compliance = () => {
     const data = await res.json();
     setRequirements(Array.isArray(data) ? data : []);
   };
->>>>>>> 97c9a4fefc5348ac1dc78ef3bb2fa7eb30d7eb4c
 
   useEffect(() => {
     Promise.all([fetchDocuments(), fetchRequirements()]).finally(() =>
@@ -118,6 +117,22 @@ const Compliance = () => {
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     navigate("/login");
+  };
+
+  /* ===================== COMPLIANCE VALIDATION ===================== */
+  const handleValidateCompliance = async () => {
+    setIsValidating(true);
+    try {
+      const res = await fetch(`${API_URL}/api/compliance/validate?framework=${selectedFramework}`);
+      const data = await res.json();
+      if (data.success) {
+        setValidationResults(data.data);
+      }
+    } catch (error) {
+      console.error('Validation failed:', error);
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   if (isLoading) {
@@ -179,6 +194,111 @@ const Compliance = () => {
           </div>
         </div>
 
+        {/* ===================== COMPLIANCE VALIDATION ===================== */}
+        <div className="rounded-2xl p-6 border shadow mb-8 bg-white dark:bg-gray-900 dark:border-gray-700">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Compliance Validation</h2>
+            <div className="flex gap-3 items-center">
+              <select 
+                value={selectedFramework} 
+                onChange={(e) => setSelectedFramework(e.target.value)}
+                className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600"
+              >
+                <option value="GRI">GRI Standards</option>
+                <option value="SASB">SASB Standards</option>
+                <option value="TCFD">TCFD Framework</option>
+                <option value="BRSR">BRSR Framework</option>
+              </select>
+              <button
+                onClick={handleValidateCompliance}
+                disabled={isValidating}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isValidating ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <FaCheckCircle />
+                )}
+                {isValidating ? 'Validating...' : 'Check Compliance'}
+              </button>
+            </div>
+          </div>
+
+          {validationResults && (
+            <div className="space-y-4">
+              {/* Validation Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="text-2xl font-bold text-blue-600">{validationResults.overallCompliance}%</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Overall Compliance</div>
+                </div>
+                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className={`text-2xl font-bold ${
+                    validationResults.status === 'Fully Compliant' ? 'text-green-600' :
+                    validationResults.status === 'Mostly Compliant' ? 'text-yellow-600' :
+                    validationResults.status === 'Partially Compliant' ? 'text-orange-600' : 'text-red-600'
+                  }`}>{validationResults.status}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Status</div>
+                </div>
+                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="text-2xl font-bold text-green-600">{validationResults.passedCount}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Passed Checks</div>
+                </div>
+                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="text-2xl font-bold text-red-600">{validationResults.issues.length}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Issues Found</div>
+                </div>
+              </div>
+
+              {/* Category Scores */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(validationResults.categoryScores).map(([category, score]) => (
+                  <div key={category} className="p-4 rounded-lg border">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">{categoryIcons[category]} {category}</span>
+                      <span className={`font-bold ${
+                        score >= 80 ? 'text-green-600' :
+                        score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>{score}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${
+                          score >= 80 ? 'bg-green-500' :
+                          score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Issues and Recommendations */}
+              {validationResults.issues.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20">
+                    <h3 className="font-semibold text-red-800 dark:text-red-400 mb-2">Issues Found</h3>
+                    <ul className="space-y-1">
+                      {validationResults.issues.map((issue, index) => (
+                        <li key={index} className="text-sm text-red-700 dark:text-red-300">• {issue}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+                    <h3 className="font-semibold text-blue-800 dark:text-blue-400 mb-2">Recommendations</h3>
+                    <ul className="space-y-1">
+                      {validationResults.recommendations.map((rec, index) => (
+                        <li key={index} className="text-sm text-blue-700 dark:text-blue-300">• {rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* ===================== COMPLIANCE REQUIREMENTS ===================== */}
         <div className="rounded-2xl p-6 border shadow mb-8 bg-white dark:bg-gray-900 dark:border-gray-700">
           <h2 className="text-lg font-semibold mb-4">
@@ -197,6 +317,9 @@ const Compliance = () => {
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {req.framework} • {req.category} • Due {req.due_date}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Created: {req.createdAt}
                   </p>
                 </div>
 

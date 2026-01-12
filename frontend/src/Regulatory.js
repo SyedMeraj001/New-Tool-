@@ -4,6 +4,7 @@ import { getThemeClasses } from './utils/themeUtils';
 import ProfessionalHeader from './components/ProfessionalHeader';
 import RegulatoryComplianceManager from './components/RegulatoryComplianceManager';
 import { useNavigate } from 'react-router-dom';
+import realtimeSyncClient from './services/realtimeSyncClient';
 
 const Regulatory = () => {
   const navigate = useNavigate();
@@ -14,61 +15,9 @@ const Regulatory = () => {
   const [animateCards, setAnimateCards] = useState(false);
   const [showComplianceModal, setShowComplianceModal] = useState(false);
   const [showRegulationDetails, setShowRegulationDetails] = useState(null);
-  
-  const [regulations] = useState([
-    { 
-      id: 1, 
-      name: 'EU Taxonomy', 
-      fullName: 'EU Sustainable Finance Taxonomy',
-      status: 'Compliant', 
-      deadline: '2024-12-31', 
-      progress: 85,
-      icon: '🇪🇺',
-      color: 'emerald',
-      description: 'Classification system for environmentally sustainable economic activities',
-      requirements: ['Environmental objectives alignment', 'Technical screening criteria', 'Do no significant harm assessment'],
-      priority: 'High'
-    },
-    { 
-      id: 2, 
-      name: 'CSRD', 
-      fullName: 'Corporate Sustainability Reporting Directive',
-      status: 'In Progress', 
-      deadline: '2024-06-30', 
-      progress: 60,
-      icon: '📊',
-      color: 'blue',
-      description: 'Enhanced sustainability reporting requirements for EU companies',
-      requirements: ['Double materiality assessment', 'ESRS standards compliance', 'Third-party assurance'],
-      priority: 'Critical'
-    },
-    { 
-      id: 3, 
-      name: 'SFDR', 
-      fullName: 'Sustainable Finance Disclosure Regulation',
-      status: 'Review Required', 
-      deadline: '2024-09-15', 
-      progress: 40,
-      icon: '💰',
-      color: 'amber',
-      description: 'Disclosure obligations for financial market participants',
-      requirements: ['Principal adverse impacts', 'Sustainability preferences', 'Product-level disclosures'],
-      priority: 'Medium'
-    },
-    { 
-      id: 4, 
-      name: 'SEC Climate Rules', 
-      fullName: 'SEC Climate-Related Disclosures',
-      status: 'Pending', 
-      deadline: '2024-11-30', 
-      progress: 20,
-      icon: '🏛️',
-      color: 'red',
-      description: 'Climate-related disclosure requirements for US public companies',
-      requirements: ['Scope 1 & 2 emissions', 'Climate risk governance', 'Transition plans'],
-      priority: 'High'
-    }
-  ]);
+  const [regulations, setRegulations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -90,6 +39,53 @@ const Regulatory = () => {
     };
     fetchCurrentUser();
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchRegulations = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('http://localhost:5000/api/regulatory', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setRegulations(data.data || []);
+        } else {
+          setError('Failed to fetch regulations');
+        }
+      } catch (error) {
+        console.error('Failed to fetch regulations:', error);
+        setError('Failed to fetch regulations');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRegulations();
+    
+    // Setup WebSocket for real-time updates
+    if (currentUser) {
+      realtimeSyncClient.connect(currentUser.id);
+      
+      const handleRegulatoryUpdate = (data) => {
+        console.log('Received regulatory update:', data);
+        if (data.type === 'regulatory_update') {
+          setRegulations(prev => 
+            prev.map(reg => reg.id === data.data.id ? data.data : reg)
+          );
+        } else if (data.type === 'regulatory_create') {
+          setRegulations(prev => [...prev, data.data]);
+        }
+      };
+      
+      realtimeSyncClient.subscribe('regulatory', handleRegulatoryUpdate);
+      
+      return () => {
+        realtimeSyncClient.unsubscribe('regulatory', handleRegulatoryUpdate);
+      };
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     setAnimateCards(true);
@@ -173,7 +169,9 @@ const Regulatory = () => {
                 : 'bg-white/60 border-slate-200 text-slate-700'
             }`}>
               <div className="text-center">
-                <div className="text-2xl font-bold">{Math.round(regulations.reduce((acc, reg) => acc + reg.progress, 0) / regulations.length)}%</div>
+                <div className="text-2xl font-bold">
+                  {regulations.length > 0 ? Math.round(regulations.reduce((acc, reg) => acc + reg.progress, 0) / regulations.length) : 0}%
+                </div>
                 <div className="text-xs">Overall Compliance</div>
               </div>
             </div>
@@ -200,6 +198,52 @@ const Regulatory = () => {
         </div>
 
         {/* Regulations Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className={`text-red-500 mb-4`}>Error: {error}</div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </div>
+        ) : regulations.length === 0 ? (
+          <div className="text-center py-12">
+            <div className={`${theme.text.secondary} mb-4`}>No regulations found</div>
+            <button 
+              onClick={() => setShowComplianceModal(true)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mr-2"
+            >
+              Add Regulation
+            </button>
+            <button 
+              onClick={() => {
+                fetch('http://localhost:5000/api/regulatory', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    name: 'New Regulation',
+                    description: 'Enter description',
+                    status: 'Pending',
+                    progress: 0,
+                    priority: 'Medium',
+                    deadline: '2024-12-31',
+                    category: 'Environmental'
+                  })
+                }).then(() => window.location.reload());
+              }}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              Quick Add
+            </button>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {regulations.map((reg, index) => (
             <div 
@@ -218,12 +262,20 @@ const Regulatory = () => {
               {/* Card Content */}
               <div className="p-6">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br from-${reg.color}-500 to-${reg.color}-600 shadow-lg`}>
-                    <span className="text-2xl">{reg.icon}</span>
+                  <div className={`p-3 rounded-xl shadow-lg ${
+                    reg.name === 'EU Taxonomy' ? 'bg-gradient-to-br from-green-500 to-green-600' :
+                    reg.name === 'CSRD' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                    reg.name === 'SFDR' ? 'bg-gradient-to-br from-orange-500 to-orange-600' :
+                    reg.name === 'SEC Climate Rules' ? 'bg-gradient-to-br from-red-500 to-red-600' :
+                    'bg-gradient-to-br from-gray-500 to-gray-600'
+                  }`}>
+                    <span className="text-2xl text-white font-bold">
+                      {reg.name === 'EU Taxonomy' ? 'EU' : reg.icon}
+                    </span>
                   </div>
                   <div className="flex-1">
                     <h3 className={`text-xl font-bold mb-1 ${theme.text.primary}`}>{reg.name}</h3>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-2`}>{reg.fullName}</p>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-2`}>{reg.description}</p>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(reg.status)}`}>
                       {reg.status}
                     </div>
@@ -270,18 +322,36 @@ const Regulatory = () => {
                     <p className={`text-sm mb-4 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {reg.description}
                     </p>
-                    <div>
-                      <h4 className={`text-sm font-semibold mb-2 ${theme.text.primary}`}>Key Requirements:</h4>
-                      <ul className="space-y-1">
-                        {reg.requirements.map((req, idx) => (
-                          <li key={idx} className={`text-xs flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                            <span className="text-green-500">✓</span>
-                            {req}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    {reg.notes && (
+                      <div className="mb-4">
+                        <h4 className={`text-sm font-semibold mb-2 ${theme.text.primary}`}>Notes:</h4>
+                        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{reg.notes}</p>
+                      </div>
+                    )}
                     <div className="flex gap-2 mt-4">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newProgress = Math.min(reg.progress + 10, 100);
+                          fetch(`http://localhost:5000/api/regulatory/${reg.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ progress: newProgress })
+                          }).then(() => {
+                            setRegulations(prev => 
+                              prev.map(r => r.id === reg.id ? {...r, progress: newProgress} : r)
+                            );
+                          });
+                        }}
+                        className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors mr-2 ${
+                          isDark 
+                            ? 'bg-green-600 hover:bg-green-700 text-white' 
+                            : 'bg-green-500 hover:bg-green-600 text-white'
+                        }`}
+                      >
+                        ✅ Update Progress
+                      </button>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -309,6 +379,7 @@ const Regulatory = () => {
             </div>
           ))}
         </div>
+        )}
 
         {/* Action Center */}
         <div className={`rounded-2xl p-6 border backdrop-blur-xl ${
@@ -325,7 +396,15 @@ const Regulatory = () => {
             ].map((action, idx) => (
               <button 
                 key={idx} 
-                onClick={() => setShowComplianceModal(true)}
+                onClick={() => {
+                  if (idx === 0) {
+                    window.location.href = '/compliance';
+                  } else if (idx === 1) {
+                    window.location.href = '/reports';
+                  } else {
+                    setShowComplianceModal(true);
+                  }
+                }}
                 className={`group p-6 rounded-xl border transition-all duration-200 hover:scale-105 hover:shadow-lg ${
                   isDark 
                     ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500' 
@@ -377,20 +456,22 @@ const Regulatory = () => {
               <div>
                 <h3 className={`font-semibold mb-2 ${
                   isDark ? 'text-white' : 'text-gray-900'
-                }`}>Full Name</h3>
-                <p className={`text-sm ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
-                }`}>{showRegulationDetails.fullName}</p>
-              </div>
-              
-              <div>
-                <h3 className={`font-semibold mb-2 ${
-                  isDark ? 'text-white' : 'text-gray-900'
                 }`}>Description</h3>
                 <p className={`text-sm ${
                   isDark ? 'text-gray-300' : 'text-gray-700'
                 }`}>{showRegulationDetails.description}</p>
               </div>
+              
+              {showRegulationDetails.notes && (
+                <div>
+                  <h3 className={`font-semibold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>Notes</h3>
+                  <p className={`text-sm ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>{showRegulationDetails.notes}</p>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -424,17 +505,10 @@ const Regulatory = () => {
               <div>
                 <h3 className={`font-semibold mb-2 ${
                   isDark ? 'text-white' : 'text-gray-900'
-                }`}>Key Requirements</h3>
-                <ul className="space-y-2">
-                  {showRegulationDetails.requirements.map((req, idx) => (
-                    <li key={idx} className={`text-sm flex items-center gap-2 ${
-                      isDark ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      <span className="text-green-500">✓</span>
-                      {req}
-                    </li>
-                  ))}
-                </ul>
+                }`}>Category</h3>
+                <p className={`text-sm ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>{showRegulationDetails.category}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -449,13 +523,10 @@ const Regulatory = () => {
                 <div>
                   <h3 className={`font-semibold mb-2 ${
                     isDark ? 'text-white' : 'text-gray-900'
-                  }`}>Priority</h3>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${getPriorityColor(showRegulationDetails.priority)}`}></div>
-                    <span className={`text-sm ${
-                      isDark ? 'text-gray-300' : 'text-gray-700'
-                    }`}>{showRegulationDetails.priority}</span>
-                  </div>
+                  }`}>Created</h3>
+                  <p className={`text-sm ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>{new Date(showRegulationDetails.createdAt || Date.now()).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>

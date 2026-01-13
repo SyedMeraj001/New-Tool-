@@ -1,0 +1,20 @@
+export const governanceMetricMap = {
+  boardSize: "board_size",
+  independentDirectorsPercentage: "independent_directors_percent",
+  femaleDirectorsPercentage: "female_directors_percentage",
+  ethicsTrainingCompletion: "ethics_training_completion_percent",
+  corruptionIncidents: "corruption_incidents",
+  dataBreachIncidents: "data_breach_incidents",
+  cybersecurityInvestment: "cybersecurity_investment",
+  supplierESGAssessments: "supplier_esg_assessments",
+  antiCorruptionPolicies: "anti_corruption_policies",
+  dataPrivacyPolicies: "data_privacy_policies",
+  climateRiskDisclosure: "climate_risk_disclosure_score",
+  sustainabilityGovernance: "sustainability_governance_score",
+  fdaCompliance: "fda_compliance",
+  drugPricingTransparency: "drug_pricing_transparency",
+  clinicalTrialEthics: "clinical_trial_ethics",
+  productSafetyCompliance: "product_safety_compliance",
+  manufacturingEthicsScore: "manufacturing_ethics_score",
+  supplyChainTransparency: "supply_chain_transparency"
+};

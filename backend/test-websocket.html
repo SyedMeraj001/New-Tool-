@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Real-time Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    <button onclick="testUpdate()">Test Regulatory Update</button>
+    
+    <script>
+        const ws = new WebSocket('ws://localhost:5000/ws');
+        const status = document.getElementById('status');
+        const messages = document.getElementById('messages');
+        
+        ws.onopen = () => {
+            status.textContent = 'Connected ✅';
+            status.style.color = 'green';
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const div = document.createElement('div');
+            div.textContent = `${new Date().toLocaleTimeString()}: ${JSON.stringify(data)}`;
+            messages.appendChild(div);
+        };
+        
+        ws.onerror = (error) => {
+            status.textContent = 'Error ❌';
+            status.style.color = 'red';
+        };
+        
+        ws.onclose = () => {
+            status.textContent = 'Disconnected 🔌';
+            status.style.color = 'orange';
+        };
+        
+        function testUpdate() {
+            fetch('/api/test/test-update/1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ progress: Math.floor(Math.random() * 100) })
+            });
+        }
+    </script>
+</body>
+</html>

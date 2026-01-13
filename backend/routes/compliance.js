@@ -168,4 +168,78 @@ router.get("/requirements", async (req, res) => {
 });
 
 
+/* ===============================
+   GET REGULATORY FRAMEWORKS
+================================ */
+router.get("/regulations", async (req, res) => {
+  try {
+    const regulations = [
+      {
+        id: 1,
+        name: 'EU Taxonomy',
+        description: 'EU Sustainable Finance Taxonomy',
+        status: 'In Progress',
+        progress: 72,
+        priority: 'High',
+        deadline: '2024-12-31',
+        icon: 'EU',
+        color: 'green',
+        category: 'Environmental',
+        notes: 'Classification system for environmentally sustainable economic activities',
+        createdAt: new Date('2024-01-01')
+      },
+      {
+        id: 2,
+        name: 'CSRD',
+        description: 'Corporate Sustainability Reporting Directive',
+        status: 'In Progress',
+        progress: 72,
+        priority: 'Critical',
+        deadline: '2024-06-30',
+        icon: '📊',
+        color: 'blue',
+        category: 'Reporting',
+        notes: 'EU directive requiring companies to report on sustainability matters',
+        createdAt: new Date('2024-01-01')
+      },
+      {
+        id: 3,
+        name: 'SFDR',
+        description: 'Sustainable Finance Disclosure Regulation',
+        status: 'In Progress',
+        progress: 72,
+        priority: 'Medium',
+        deadline: '2024-09-15',
+        icon: '💰',
+        color: 'orange',
+        category: 'Financial',
+        notes: 'EU regulation on sustainability-related disclosures in the financial services sector',
+        createdAt: new Date('2024-01-01')
+      },
+      {
+        id: 4,
+        name: 'SEC Climate Rules',
+        description: 'SEC Climate-Related Disclosures',
+        status: 'In Progress',
+        progress: 72,
+        priority: 'High',
+        deadline: '2024-11-30',
+        icon: '🏛️',
+        color: 'red',
+        category: 'Climate',
+        notes: 'SEC rules requiring public companies to disclose climate-related risks and greenhouse gas emissions',
+        createdAt: new Date('2024-01-01')
+      }
+    ];
+    
+    res.json({
+      success: true,
+      data: regulations
+    });
+  } catch (err) {
+    console.error("REGULATIONS FETCH ERROR:", err.message);
+    res.status(500).json({ message: "Failed to fetch regulations" });
+  }
+});
+
 export default router;

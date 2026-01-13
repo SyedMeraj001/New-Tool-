@@ -49,7 +49,7 @@ const User = sequelize.define("User", {
   isApproved: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
-    field: 'is_approved'
+    field: 'is_active'  // Map to is_active column in database
   }
 }, {
   tableName: 'users',

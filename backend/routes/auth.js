@@ -71,9 +71,12 @@ router.post("/login", async (req, res) => {
   });
 
   res.json({
+    success: true,
+    message: "Login successful",
     user: {
       id: user.id,
       fullName: user.fullName,
+      email: user.email,
       role: user.role
     }
   });
@@ -87,12 +90,13 @@ router.get("/me", authMiddleware, async (req, res) => {
     const user = await User.findByPk(req.user.id);
     if (!user) {
       console.log("❌ No user found with ID:", req.user.id);
-      return res.status(401).json({ authenticated: false });
+      return res.status(401).json({ success: false, authenticated: false });
     }
 
     console.log("✅ Found user:", { id: user.id, fullName: user.fullName, role: user.role });
 
     res.json({
+      success: true,
       authenticated: true,
       user: {
         id: user.id,
@@ -104,7 +108,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.log("❌ Auth check error:", error.message);
-    res.status(500).json({ authenticated: false });
+    res.status(500).json({ success: false, authenticated: false });
   }
 });
 

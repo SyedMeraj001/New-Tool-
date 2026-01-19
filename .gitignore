@@ -17,3 +17,6 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Uploaded files (MUST NEVER be committed)
+backend/uploads/

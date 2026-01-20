@@ -10,7 +10,8 @@ const User = sequelize.define("User", {
 
   fullName: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'full_name'
   },
 
   email: {
@@ -30,7 +31,8 @@ const User = sequelize.define("User", {
   },
 
   contactNumber: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    field: 'contact_number'
   },
 
   contacts: {
@@ -40,13 +42,20 @@ const User = sequelize.define("User", {
 
   profilePhoto: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    field: 'profile_photo'
   },
 
   isApproved: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true
+    defaultValue: true,
+    field: 'is_active'  // Map to is_active column in database
   }
+}, {
+  tableName: 'users',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 export default User;

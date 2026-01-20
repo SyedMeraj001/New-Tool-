@@ -49,7 +49,7 @@ const saveCompany = async (req, res) => {
 const getAllCompanies = async (req, res) => {
   try {
     const companies = await Company.findAll({
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
     });
 
     res.json({

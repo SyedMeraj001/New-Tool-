@@ -1,15 +1,31 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../server");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
 const ComplianceRequirement = sequelize.define("ComplianceRequirement", {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  name: { type: DataTypes.STRING, allowNull: false },
-  category: { type: DataTypes.STRING },
-  due_date: { type: DataTypes.DATE },
-  status: { type: DataTypes.STRING },
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  due_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'Pending'
+  }
 }, {
   tableName: "compliance_requirements",
-  timestamps: false,
+  timestamps: false
 });
 
-module.exports = ComplianceRequirement;
+export default ComplianceRequirement;

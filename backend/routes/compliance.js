@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
@@ -170,8 +170,6 @@ router.get("/requirements", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-
 /* ===============================
    GET REGULATORY FRAMEWORKS
 ================================ */
@@ -235,7 +233,7 @@ router.get("/regulations", async (req, res) => {
         createdAt: new Date('2024-01-01')
       }
     ];
-    
+
     res.json({
       success: true,
       data: regulations
@@ -246,6 +244,4 @@ router.get("/regulations", async (req, res) => {
   }
 });
 
-=======
->>>>>>> 2a35955 (compliance by Revathi)
 export default router;

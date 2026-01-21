@@ -31,7 +31,7 @@ import complianceRoutes from './routes/compliance.js';
 import kpisTeamRoutes from './routes/kpis.js';
 import reportTeamRoutes from './routes/reportRoutes.js';
 import stakeholderRoutes from './routes/stakeholderRoutes.js';
-import regulatoryRoutes from './routes/regulatory.js';
+import regulatoryRoutes from './routes/regulatoryRoutes.js'; // fixed import
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

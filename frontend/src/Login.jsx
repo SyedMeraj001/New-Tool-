@@ -85,15 +85,15 @@ const Login = () => {
   return (
     <div className={`min-h-screen flex items-center justify-center p-6 transition-all duration-500 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-[#e9edf2] via-[#f1f5f9] to-[#e2e8f0]'}`}>
       {/* Background animations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#3a7a44]/10 rounded-full animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#1b3a2d]/10 rounded-full animate-bounce" style={{animationDuration: '3s'}}></div>
       </div>
 
-      <div className={`container relative max-w-5xl w-full h-[650px] rounded-2xl shadow-2xl overflow-hidden border transition-all duration-1000 z-10 ${isSignup ? 'active' : ''}`} style={isDark ? { background: 'rgba(17,24,39,0.9)', border: '2px solid #3a7a44' } : { background: 'rgba(255,255,255,0.9)', border: '2px solid #3a7a44' }}>
+      <div className={`container relative max-w-5xl w-full h-[650px] rounded-2xl shadow-2xl overflow-hidden border transition-all duration-1000 ${isSignup ? 'active' : ''}`} style={isDark ? { background: 'rgba(17,24,39,0.9)', border: '2px solid #3a7a44' } : { background: 'rgba(255,255,255,0.9)', border: '2px solid #3a7a44' }}>
 
         {/* Login Form */}
-        <div className={`form-box Login absolute top-0 left-0 w-1/2 h-full flex justify-center flex-col px-10 z-20 ${isSignup ? 'pointer-events-none' : ''}`}>
+        <div className="form-box Login absolute top-0 left-0 w-1/2 h-full flex justify-center flex-col px-10">
           <div className="flex items-center justify-center gap-3 mb-6">
             <img src={logo} alt="Logo" className="w-12 h-12 rounded-full border-2 border-[#3a7a44]/30" />
             <div className="text-center">
@@ -166,7 +166,7 @@ const Login = () => {
         </div>
 
         {/* Info Panel - Login */}
-        <div className={`info-content Login absolute top-0 right-0 h-full w-1/2 flex justify-center flex-col text-right pr-10 pl-10 pb-16 bg-gradient-to-br from-[#1b3a2d] to-[#3a7a44] z-10 ${isSignup ? 'opacity-0 pointer-events-none' : ''}`}>
+        <div className="info-content Login absolute top-0 right-0 h-full w-1/2 flex justify-center flex-col text-right pr-10 pl-36 pb-16 bg-gradient-to-br from-[#1b3a2d] to-[#3a7a44]">
           <div className="flex items-center justify-end gap-3 mb-4">
             <div className="text-right">
               <h2 className="text-3xl font-bold text-white">ESGenius Tech</h2>
@@ -179,7 +179,7 @@ const Login = () => {
         </div>
 
         {/* Signup Form */}
-        <div className={`form-box Register absolute top-0 right-0 w-1/2 h-full flex justify-center flex-col px-12 py-8 transition-all duration-500 ${isSignup ? 'opacity-100 z-20' : 'opacity-0 z-0 pointer-events-none'}`}>
+        <div className={`form-box Register absolute top-0 right-0 w-1/2 h-full flex justify-center flex-col px-12 py-8 transition-all duration-500 ${isSignup ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
           <div className="flex items-center justify-center gap-3 mb-4">
             <img src={logo} alt="Logo" className="w-10 h-10 rounded-full border-2 border-[#3a7a44]/30" />
             <div className="text-center">
@@ -245,7 +245,7 @@ const Login = () => {
         </div>
 
         {/* Info Panel - Signup */}
-        <div className={`info-content Register absolute top-0 left-0 h-full w-1/2 flex justify-center flex-col text-left pl-10 pr-10 pb-16 bg-gradient-to-br from-[#3a7a44] to-[#1b3a2d] transition-all duration-500 ${isSignup ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+        <div className={`info-content Register absolute top-0 left-0 h-full w-1/2 flex justify-center flex-col text-left pl-10 pr-36 pb-16 bg-gradient-to-br from-[#3a7a44] to-[#1b3a2d] transition-all duration-500 ${isSignup ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
           <div className="flex items-center gap-3 mb-4">
             <img src={logo} alt="Logo" className="w-16 h-16 rounded-full border-2 border-white/20" />
             <div>
